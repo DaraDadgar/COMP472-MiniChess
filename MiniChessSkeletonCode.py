@@ -93,8 +93,19 @@ class MiniChess:
                        self.king_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)              
         return
 
-    #TODO: Change the formatting of these comments to match the other functions in the class
-    #Function to define the valid moves if the piece is a king
+    """
+    Updates the list of valid moves with the valid moves for the King piece
+
+    Args:
+        - row_index: int | current row position of the square in the dictionary of game_state
+        - col_index: int | current column position of the square in the dictionary of game_state
+        - start_now: str | current row letter of the square
+        - start_col: int | current column number of the square
+        - game_state: dict | Dictionary representing the current game state
+        - valid_moves: list | A list of nested tuples corresponding to valid moves
+    Returns:
+        - valid_moves: list | Updated list of nested tuples corresponding to valid moves
+    """
     def king_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves):
         for i, row in enumerate(game_state["board"]):
             for j, square in enumerate(row):
@@ -106,9 +117,14 @@ class MiniChess:
         print(valid_moves)
         return 
 
-    #TODO: Change the formatting of these comments to match the other functions in the class
-    #Function to convert numbers to letters
-    #Used to convert row numbers into letters for syntax validity
+    """
+    Converts the row numbers into letters for syntax validity
+
+    Args:
+        - number: int | integer value holding a row number
+    Returns:
+        - char | returns a single character corresponding to the conversion of the number to a letter
+    """
     def number_to_letter(self, number):
         return chr(number + ord("A"))
 
