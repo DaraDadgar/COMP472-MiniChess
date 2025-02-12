@@ -14,6 +14,7 @@ class MiniChess:
         - None
     Returns:
         - state: A dictionary representing the state of the game
+        *Reteurns two key-value pairs: board config and player turn for the initial configuration of the game*
     """
     def init_board(self):
         state = {
@@ -54,7 +55,14 @@ class MiniChess:
     """
     def is_valid_move(self, game_state, move):
         # Check if move is in list of valid moves
-        return True
+
+        #Stores the return value of the valid_moves function in a variable
+        #and checks if the move passed as an argument is in that list of valid moves.
+        #valid_moves = self.valid_moves(game_state)
+        #if move in valid_moves:
+            return True
+        #else:
+          # return False
 
     """
     Returns a list of valid moves
@@ -68,10 +76,44 @@ class MiniChess:
         # Return a list of all the valid moves.
         # Implement basic move validation
         # Check for out-of-bounds, correct turn, move legality, etc
+
+        #Creating a list of all valid moves which will be returned at the end of the funciton
+        valid_moves = list()
+        
+        #Storing the turn value
+        turn = game_state["turn"]
+        #Looping through each filled coordinate on the board
+        for row_index, row in enumerate(game_state["board"]):
+            for col_index, square in enumerate(row):
+                if (square[0] != '.' and square[0] == turn[0]):
+                    piece = square[1] #storing the piece type
+                    start_row = self.number_to_letter(col_index)
+                    start_col = str(5-row_index)
+                    if (piece == "K"):
+                       self.king_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)              
         return
 
+    #TODO: Change the formatting of these comments to match the other functions in the class
+    #Function to define the valid moves if the piece is a king
+    def king_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves):
+        for i, row in enumerate(game_state["board"]):
+            for j, square in enumerate(row):
+                if (square == "." or square[0] != game_state["turn"][0]):
+                    if (abs(i-row_index) <= 1 and abs(j-col_index) <= 1):
+                        end_row = self.number_to_letter(j)
+                        end_col = str(5-i)
+                        valid_moves.append(((start_row,start_col),(end_row,end_col)))
+        print(valid_moves)
+        return 
+
+    #TODO: Change the formatting of these comments to match the other functions in the class
+    #Function to convert numbers to letters
+    #Used to convert row numbers into letters for syntax validity
+    def number_to_letter(self, number):
+        return chr(number + ord("A"))
+
     """
-    Modify to board to make a move
+    Modify the board to make a move
 
     Args: 
         - game_state:   dictionary | Dictionary representing the current game state
@@ -101,7 +143,7 @@ class MiniChess:
     """
     def parse_input(self, move):
         try:
-            start, end = move.split()
+            start, end = move.split() #Splits the move (B2 B3) into start=B2 and end=B3
             start = (5-int(start[1]), ord(start[0].upper()) - ord('A'))
             end = (5-int(end[1]), ord(end[0].upper()) - ord('A'))
             return (start, end)
@@ -120,6 +162,7 @@ class MiniChess:
         print("Welcome to Mini Chess! Enter moves as 'B2 B3'. Type 'exit' to quit.")
         while True:
             self.display_board(self.current_game_state)
+            self.valid_moves(self.current_game_state)
             move = input(f"{self.current_game_state['turn'].capitalize()} to move: ")
             if move.lower() == 'exit':
                 print("Game exited.")
@@ -129,9 +172,13 @@ class MiniChess:
             if not move or not self.is_valid_move(self.current_game_state, move):
                 print("Invalid move. Try again.")
                 continue
-
+                    
             self.make_move(self.current_game_state, move)
+            
+
 
 if __name__ == "__main__":
+    #Creating an instance of MiniChess
     game = MiniChess()
+    #Calling the play() method to initialize the game
     game.play()
