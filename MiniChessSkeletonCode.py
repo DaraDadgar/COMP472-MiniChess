@@ -2,11 +2,24 @@ import math
 import copy
 import time
 import argparse
+from xml.etree.ElementTree import tostring
+
 
 class MiniChess:
     def __init__(self):
         self.current_game_state = self.init_board()
+        self.turn_counter = 0
+        self.pieces_counter = 12
+        self.turn_with_piece_taken = 0
+        with open("gameTrace-false-5-10.txt", "w") as file:
+            file.write("NEW GAME START!\n\n GAME PARAMETERS:\n")
+            file.write("Timeout = 5\nMax Number of Turns = 100\nPlay Mode = H-H")
+            file.write("\n\n\n Initial configuration:\n")
+            for i, row in enumerate(self.current_game_state["board"], start=1):
+                file.write(str(6 - i) + "  " + ' '.join(piece.rjust(3) for piece in row))
+                file.write("\n")
 
+            file.write("\nNEW GAME START\n")
     """
     Initialize the board
 
@@ -14,7 +27,7 @@ class MiniChess:
         - None
     Returns:
         - state: A dictionary representing the state of the game
-        *Reteurns two key-value pairs: board config and player turn for the initial configuration of the game*
+        *Returns two key-value pairs: board config and player turn for the initial configuration of the game*
     """
     def init_board(self):
         state = {
@@ -26,6 +39,8 @@ class MiniChess:
                 ['.', 'wN', 'wB', 'wQ', 'wK']],
                 "turn": 'white',
                 }
+
+
         return state
 
     """
@@ -90,7 +105,7 @@ class MiniChess:
                     start_row = self.number_to_letter(col_index)
                     start_col = str(5-row_index)
                     if (piece == "K"):
-                       self.king_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)              
+                       self.king_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)
         return
 
     """
@@ -128,6 +143,14 @@ class MiniChess:
     def number_to_letter(self, number):
         return chr(number + ord("A"))
 
+    def log_move(self, game_state, move):
+        board_move = self.unparse_input(move)
+        start = board_move[0]
+        end = board_move[1]
+        with open("gameTrace-false-5-10.txt", "a") as file:
+            file.write("\nTurn #" + str(self.turn_counter) + "\n")
+            file.write("Player = " + game_state["turn"] + "\n")
+            file.write("Move from " + start + " to " + end + "\n")
     """
     Modify the board to make a move
 
@@ -142,10 +165,18 @@ class MiniChess:
         end = move[1]
         start_row, start_col = start
         end_row, end_col = end
+        if  game_state["board"][end_row][end_col] != '.':
+            self.turn_with_piece_taken = self.turn_counter
         piece = game_state["board"][start_row][start_col]
         game_state["board"][start_row][start_col] = '.'
         game_state["board"][end_row][end_col] = piece
-        game_state["turn"] = "black" if game_state["turn"] == "white" else "white"
+        self.log_move(game_state,move)
+        if game_state["turn"] == "white":
+            game_state["turn"] = "black"
+        else:
+            game_state["turn"] = "white"
+            self.turn_counter += 1
+            print(self.turn_counter)
 
         return game_state
 
@@ -166,9 +197,65 @@ class MiniChess:
         except:
             return None
 
+    def unparse_input(self, move):
+        try:
+            start, end = move  # Extract start and end tuples
+
+            # Convert row index back to board notation (e.g., 3 -> "B")
+            start_letter = chr(start[1] + ord('A'))
+            start_number = str(5 - start[0])
+
+            end_letter = chr(end[1] + ord('A'))
+            end_number = str(5 - end[0])
+
+            return (f"{start_letter}{start_number}", f"{end_letter}{end_number}")
+        except:
+            return None  # Return None if an error occurs
+
+    """
+    Check if the move to be made is a win condition. This assumes the move is valid
+
+    Args:
+        - move: tuple representing a move ((start_row, start_col),(end_row, end_col))
+    Returns:
+        - String of which side won, if any.
+    """
+    def check_win(self, game_state, move):
+        # Extract the end position from the move tuple
+        endPos = move[1]  # Assuming move is a tuple like ((start_row, start_col), (end_row, end_col))
+
+        # Get the board
+        board = game_state["board"]
+
+        # Extract the piece at the end position
+        end_piece = board[endPos[0]][endPos[1]]
+
+        # Check if the piece is a black king ('bK') or a white king ('wK')
+        if end_piece == "bK":
+            return "Black King captured! White wins!"
+        elif end_piece == "wK":
+            return "White King captured! Black wins!"
+
+        # If no king was captured, return None or False
+        return None
+
+    """
+    Check if the round we have reached is a draw
+
+    Args:
+        - none
+    Returns:
+        - true if the round we have reached is a draw. False otherwise and game continues as normal
+    """
+    def check_draw(self):
+        if self.turn_counter - self.turn_with_piece_taken >= 10:
+            return True
+        else:
+            return False
+
     """
     Game loop
-
+    
     Args:
         - None
     Returns:
@@ -177,6 +264,13 @@ class MiniChess:
     def play(self):
         print("Welcome to Mini Chess! Enter moves as 'B2 B3'. Type 'exit' to quit.")
         while True:
+
+            if self.check_draw():
+                print("Players draw... ending game")
+                exit(1)
+            if self.turn_counter>=100:
+                print("Max turn reached... ending game")
+                exit(1)
             self.display_board(self.current_game_state)
             self.valid_moves(self.current_game_state)
             move = input(f"{self.current_game_state['turn'].capitalize()} to move: ")
@@ -188,10 +282,15 @@ class MiniChess:
             if not move or not self.is_valid_move(self.current_game_state, move):
                 print("Invalid move. Try again.")
                 continue
-                    
-            self.make_move(self.current_game_state, move)
-            
 
+            #Auto checking if it's a valid move from previous statement
+            win_condition = self.check_win(self.current_game_state, move)
+
+            self.make_move(self.current_game_state, move)
+
+            if win_condition == "White King captured! Black wins!" or win_condition == "Black King captured! White wins!":
+                print(win_condition)
+                exit(1)
 
 if __name__ == "__main__":
     #Creating an instance of MiniChess
