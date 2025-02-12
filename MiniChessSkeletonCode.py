@@ -90,7 +90,10 @@ class MiniChess:
                     start_row = self.number_to_letter(col_index)
                     start_col = str(5-row_index)
                     if (piece == "K"):
-                       self.king_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)              
+                       self.king_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)    
+                    if (piece == "N"):
+                        self.knight_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)     
+        print(valid_moves)     
         return
 
     """
@@ -114,7 +117,29 @@ class MiniChess:
                         end_row = self.number_to_letter(j)
                         end_col = str(5-i)
                         valid_moves.append(((start_row,start_col),(end_row,end_col)))
-        print(valid_moves)
+        return 
+    
+        """
+    Updates the list of valid moves with the valid moves for the Knight piece
+
+    Args:
+        - row_index: int | current row position of the square in the dictionary of game_state
+        - col_index: int | current column position of the square in the dictionary of game_state
+        - start_now: str | current row letter of the square
+        - start_col: int | current column number of the square
+        - game_state: dict | Dictionary representing the current game state
+        - valid_moves: list | A list of nested tuples corresponding to valid moves
+    Returns:
+        - valid_moves: list | Updated list of nested tuples corresponding to valid moves
+    """
+    def knight_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves):
+        for i, row in enumerate(game_state["board"]):
+            for j, square in enumerate(row):
+                if (square == "." or square[0] != game_state["turn"][0]):
+                    if (abs(i-row_index) == 2 and abs(j-col_index) == 1) or (abs(i-row_index) == 1 and abs(j-col_index) == 2):
+                        end_row = self.number_to_letter(j)
+                        end_col = str(5-i)
+                        valid_moves.append(((start_row,start_col),(end_row,end_col)))
         return 
 
     """
