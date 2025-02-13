@@ -69,15 +69,19 @@ class MiniChess:
         - boolean representing the validity of the move
     """
     def is_valid_move(self, game_state, move):
-        # Check if move is in list of valid moves
+        valid_moves = self.valid_moves(game_state) #get valid moves list
 
-        #Stores the return value of the valid_moves function in a variable
-        #and checks if the move passed as an argument is in that list of valid moves.
-        #valid_moves = self.valid_moves(game_state)
-        #if move in valid_moves:
-            return True
-        #else:
-          # return False
+        # if valid_moves is None or not isinstance(valid_moves, list):
+        #     print("Error: valid_moves is None or not a list")
+        #     return False
+        # Convert move from index format to chess notation format, fixed the mismatch
+        start, end = move
+        start_col, start_row = self.number_to_letter(start[1]), str(5 - start[0])
+        end_col, end_row = self.number_to_letter(end[1]), str(5 - end[0])
+        chess_move = ((start_col, start_row), (end_col, end_row)) 
+        print(f"Checking if {chess_move} is in {valid_moves}")
+        return chess_move in valid_moves
+
 
     """
     Returns a list of valid moves
@@ -107,9 +111,13 @@ class MiniChess:
                     if (piece == "K"):
                        self.king_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)    
                     if (piece == "N"):
-                        self.knight_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)     
+                        self.knight_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves) 
+                    if (piece == "B"):
+                        self.bishop_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)
+                    if (piece == "Q"):
+                        self.queen_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)    
         print(valid_moves)     
-        return
+        return valid_moves
 
     """
     Updates the list of valid moves with the valid moves for the King piece
@@ -165,6 +173,50 @@ class MiniChess:
     Returns:
         - char | returns a single character corresponding to the conversion of the number to a letter
     """
+    def bishop_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves):
+        directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]  # top left, top right, bottom left, bottom right
+        for d in directions:
+            i, j = row_index + d[0], col_index + d[1]
+            while 0 <= i < 5 and 0 <= j < 5:
+                if game_state["board"][i][j] == ".":
+                    end_row = self.number_to_letter(j)
+                    end_col = str(5 - i)
+                    valid_moves.append(((start_row, start_col), (end_row, end_col)))
+                elif game_state["board"][i][j][0] == game_state["turn"][0]:  # same color piece blocks
+                    break
+                elif game_state["board"][i][j][0] != game_state["turn"][0]:  # capture opponents piece
+                    end_row = self.number_to_letter(j)
+                    end_col = str(5 - i)
+                    valid_moves.append(((start_row, start_col), (end_row, end_col)))
+                    break 
+                else:
+                    break  
+                i += d[0]
+                j += d[1]
+
+    def queen_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves):
+        directions = [(-1, -1), (-1, 1), (1, -1), (1, 1),  # bishop directions
+                      (-1, 0), (1, 0), (0, -1), (0, 1)]  # rook directions
+        
+        for d in directions:
+            i, j = row_index + d[0], col_index + d[1]
+            while 0 <= i < 5 and 0 <= j < 5:  
+                if game_state["board"][i][j] == ".": 
+                    end_row = self.number_to_letter(j)
+                    end_col = str(5 - i)
+                    valid_moves.append(((start_row, start_col), (end_row, end_col)))
+                elif game_state["board"][i][j][0] == game_state["turn"][0]: 
+                    break
+                elif game_state["board"][i][j][0] != game_state["turn"][0]:  
+                    end_row = self.number_to_letter(j)
+                    end_col = str(5 - i)
+                    valid_moves.append(((start_row, start_col), (end_row, end_col)))
+                    break  
+                else:
+                    break 
+                i += d[0]
+                j += d[1]
+    
     def number_to_letter(self, number):
         return chr(number + ord("A"))
 
