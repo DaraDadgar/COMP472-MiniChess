@@ -73,11 +73,14 @@ class MiniChess:
 
         #Stores the return value of the valid_moves function in a variable
         #and checks if the move passed as an argument is in that list of valid moves.
-        #valid_moves = self.valid_moves(game_state)
-        #if move in valid_moves:
+        valid_moves = self.valid_moves(game_state)
+        print(valid_moves) #Checking if the list contains the correct valid moves
+        print()
+        converted_move = self.unparse_input_v2(move)
+        if converted_move in valid_moves:
             return True
-        #else:
-          # return False
+        else:
+            return False
 
     """
     Returns a list of valid moves
@@ -102,17 +105,21 @@ class MiniChess:
             for col_index, square in enumerate(row):
                 if (square[0] != '.' and square[0] == turn[0]):
                     piece = square[1] #storing the piece type
+                    color = square[0] #storing the piece color
                     start_row = self.number_to_letter(col_index)
                     start_col = str(5-row_index)
                     if (piece == "K"):
                        self.king_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)    
                     if (piece == "N"):
-                        self.knight_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)     
-        print(valid_moves)     
-        return
+                        self.knight_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)
+                    if (piece == "p" and color == "w"):
+                        self.white_pawn_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)
+                    if (piece == "p" and color == "b"):
+                        self.black_pawn_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)
+        return valid_moves
 
     """
-    Updates the list of valid moves with the valid moves for the King piece
+    Updates the list of valid moves with the valid moves for the "King" piece
 
     Args:
         - row_index: int | current row position of the square in the dictionary of game_state
@@ -134,18 +141,9 @@ class MiniChess:
                         valid_moves.append(((start_row,start_col),(end_row,end_col)))
         return 
     
-        """
-    Updates the list of valid moves with the valid moves for the Knight piece
-
-    Args:
-        - row_index: int | current row position of the square in the dictionary of game_state
-        - col_index: int | current column position of the square in the dictionary of game_state
-        - start_now: str | current row letter of the square
-        - start_col: int | current column number of the square
-        - game_state: dict | Dictionary representing the current game state
-        - valid_moves: list | A list of nested tuples corresponding to valid moves
-    Returns:
-        - valid_moves: list | Updated list of nested tuples corresponding to valid moves
+    """
+    Updates the list of valid moves with the valid moves for the "Knight" piece
+    
     """
     def knight_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves):
         for i, row in enumerate(game_state["board"]):
@@ -155,6 +153,40 @@ class MiniChess:
                         end_row = self.number_to_letter(j)
                         end_col = str(5-i)
                         valid_moves.append(((start_row,start_col),(end_row,end_col)))
+        return
+    
+    """
+    Updates the list of valid moves with the valid moves for the "Pawn" piece
+    
+    """
+    def white_pawn_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves):
+        for i, row in enumerate(game_state["board"]):
+            for j, square in enumerate(row):
+                    if (square == "."):
+                        if ((i-row_index) == -1 and j == col_index):
+                            end_row = self.number_to_letter(j)
+                            end_col = str(5-i)
+                            valid_moves.append(((start_row,start_col),(end_row,end_col)))
+                    elif (square[0] != game_state["turn"][0]):
+                        if ((i-row_index) == -1 and abs(j-col_index) == 1):
+                            end_row = self.number_to_letter(j)
+                            end_col = str(5-i)
+                            valid_moves.append(((start_row,start_col),(end_row,end_col)))   
+        return 
+    
+    def black_pawn_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves):
+        for i, row in enumerate(game_state["board"]):
+            for j, square in enumerate(row):
+                    if (square == "."):
+                        if ((i-row_index) == 1 and j == col_index):
+                            end_row = self.number_to_letter(j)
+                            end_col = str(5-i)
+                            valid_moves.append(((start_row,start_col),(end_row,end_col)))
+                    elif (square[0] != game_state["turn"][0]):
+                        if ((i-row_index) == 1 and abs(j-col_index) == 1):
+                            end_row = self.number_to_letter(j)
+                            end_col = str(5-i)
+                            valid_moves.append(((start_row,start_col),(end_row,end_col)))   
         return 
 
     """
@@ -237,6 +269,23 @@ class MiniChess:
         except:
             return None  # Return None if an error occurs
 
+    #Redefined the unparse function with a different return value this time.
+    #used for convert the move passed as an arg to is_valid_move() to a value comparable to the list of valid moves
+    def unparse_input_v2(self, move):
+        try:
+            start, end = move  # Extract start and end tuples
+
+            # Convert row index back to board notation (e.g., 3 -> "B")
+            start_letter = chr(start[1] + ord('A'))
+            start_number = str(5 - start[0])
+
+            end_letter = chr(end[1] + ord('A'))
+            end_number = str(5 - end[0])
+
+            return ((start_letter,start_number), (end_letter, end_number))
+        except:
+            return None  # Return None if an error occurs
+
     """
     Check if the move to be made is a win condition. This assumes the move is valid
 
@@ -301,7 +350,6 @@ class MiniChess:
                 print("Max turn reached... ending game")
                 exit(1)
             self.display_board(self.current_game_state)
-            self.valid_moves(self.current_game_state)
             move = input(f"{self.current_game_state['turn'].capitalize()} to move: ")
             if move.lower() == 'exit':
                 print("Game exited.")
