@@ -8,9 +8,9 @@ from xml.etree.ElementTree import tostring
 class MiniChess:
     def __init__(self):
         self.current_game_state = self.init_board()
-        self.turn_counter = 0
+        self.turn_counter = 1
         self.pieces_counter = 12
-        self.turn_with_piece_taken = 0
+        self.turn_with_piece_taken = 1
         with open("gameTrace-false-5-10.txt", "w") as file:
             file.write("NEW GAME START!\n\n GAME PARAMETERS:\n")
             file.write("Timeout = 5\nMax Number of Turns = 100\nPlay Mode = H-H")
@@ -248,7 +248,9 @@ class MiniChess:
         - true if the round we have reached is a draw. False otherwise and game continues as normal
     """
     def check_draw(self):
-        if self.turn_counter - self.turn_with_piece_taken >= 10:
+        if self.turn_counter - self.turn_with_piece_taken >= 2: #edit to change number of turns till end of game
+            with open("gameTrace-false-5-10.txt", "a") as file:
+                file.write("Match ended in a draw after " + str(self.turn_counter - 1) + " turns")
             return True
         else:
             return False
@@ -269,6 +271,8 @@ class MiniChess:
                 print("Players draw... ending game")
                 exit(1)
             if self.turn_counter>=100:
+                with open("gameTrace-false-5-10.txt", "a") as file:
+                    file.write("\nTurn limit reached at " + str(self.turn_counter) + " turns")
                 print("Max turn reached... ending game")
                 exit(1)
             self.display_board(self.current_game_state)
@@ -288,8 +292,15 @@ class MiniChess:
 
             self.make_move(self.current_game_state, move)
 
-            if win_condition == "White King captured! Black wins!" or win_condition == "Black King captured! White wins!":
+            if win_condition == "White King captured! Black wins!":
                 print(win_condition)
+                with open("gameTrace-false-5-10.txt", "a") as file:
+                    file.write("\nWhite King captured! Black wins after " + str(self.turn_counter) + " turns")
+                exit(1)
+            elif win_condition == "Black King captured! White wins!":
+                print(win_condition)
+                with open("gameTrace-false-5-10.txt", "a") as file:
+                    file.write("\nBlack King captured! White wins after " + str(self.turn_counter) + " turns")
                 exit(1)
 
 if __name__ == "__main__":
