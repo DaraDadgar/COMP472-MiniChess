@@ -69,32 +69,13 @@ class MiniChess:
         - boolean representing the validity of the move
     """
     def is_valid_move(self, game_state, move):
-        valid_moves = self.valid_moves(game_state) #get valid moves list
+        # Check if move is in list of valid moves
 
-        # if valid_moves is None or not isinstance(valid_moves, list):
-        #     print("Error: valid_moves is None or not a list")
-        #     return False
-        # Convert move from index format to chess notation format, fixed the mismatch
-        start, end = move
-        start_col, start_row = self.number_to_letter(start[1]), str(5 - start[0])
-        end_col, end_row = self.number_to_letter(end[1]), str(5 - end[0])
-        chess_move = ((start_col, start_row), (end_col, end_row)) 
-        print(f"Checking if {chess_move} is in {valid_moves}")
-        return chess_move in valid_moves
-
-<<<<<<< HEAD
         #Stores the return value of the valid_moves function in a variable
         #and checks if the move passed as an argument is in that list of valid moves.
         valid_moves = self.valid_moves(game_state)
-        print(valid_moves) #Checking if the list contains the correct valid moves
-        print()
         converted_move = self.unparse_input_v2(move)
-        if converted_move in valid_moves:
-            return True
-        else:
-            return False
-=======
->>>>>>> cf177070ad605aeb0037c7bf097451fecee39d29
+        return converted_move in valid_moves
 
     """
     Returns a list of valid moves
@@ -125,20 +106,15 @@ class MiniChess:
                     if (piece == "K"):
                        self.king_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)    
                     if (piece == "N"):
-<<<<<<< HEAD
                         self.knight_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)
                     if (piece == "p" and color == "w"):
                         self.white_pawn_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)
                     if (piece == "p" and color == "b"):
                         self.black_pawn_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)
-=======
-                        self.knight_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves) 
                     if (piece == "B"):
                         self.bishop_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)
                     if (piece == "Q"):
-                        self.queen_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)    
-        print(valid_moves)     
->>>>>>> cf177070ad605aeb0037c7bf097451fecee39d29
+                        self.queen_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)     
         return valid_moves
 
     """
