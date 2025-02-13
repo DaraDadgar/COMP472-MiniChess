@@ -228,6 +228,10 @@ class MiniChess:
         game_state["board"][start_row][start_col] = '.'
         game_state["board"][end_row][end_col] = piece
         self.log_move(game_state,move)
+        if piece == "wp" and end_row == 0:
+            game_state["board"][end_row][end_col] = "wQ"
+        if piece == "bp" and end_row == 4:
+            game_state["board"][end_row][end_col] = "bQ"
         if game_state["turn"] == "white":
             game_state["turn"] = "black"
         else:
