@@ -28,6 +28,17 @@ The purpose of this project is to implement minimax, alpha-beta and develop adve
   - `display_board(game_state)`: Displays the current state of the board.
   - `is_valid_move(game_state, move)`: Checks if a move is valid.
   - `valid_moves(game_state)`: Returns a list of all valid moves for the current player.
+  - `king_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves)`: Updates the list of valid moves with the valid moves for the "King" piece.
+  - `knight_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves)`: Updates the list of valid moves with the valid moves for the "Knight" piece.
+  - `white_pawn_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves)`: Updates the list of valid moves with the valid moves for the "White Pawn" piece.
+  - `black_pawn_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves)`: Updates the list of valid moves with the valid moves for the "Black Pawn" piece.
+  - `bishop_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves)`: Updates the list of valid moves with the valid moves for the "Bishop" piece.
+  - `queen_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves)`: Updates the list of valid moves with the valid moves for the "Queen" piece.
+  - `number_to_letter(self, number)`: Converts the row numbers into letters for syntax validity
+  - `log_move(self, game_state, move)`: Logs the move information to the game file previously generated
+  - `parse_input(self, move)`: Parse the input string and modify it into board coordinates
+  - `unparse_input(self, move)`: Unparse the input string and modify it into chess terminology
+  - `unparse_input_v2(self, move)`: Unparse the input string and modify it into chess terminology (version 2)
   - `make_move(game_state, move)`: Updates the game state based on the move.
   - `check_win(game_state, move)`: Checks if the move results in a win.
   - `check_draw()`: Checks if the game has reached a draw condition.
