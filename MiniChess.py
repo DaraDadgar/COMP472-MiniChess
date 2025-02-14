@@ -8,9 +8,8 @@ from xml.etree.ElementTree import tostring
 class MiniChess:
     def __init__(self):
         self.current_game_state = self.init_board()
-        self.turn_counter = 1
-        self.pieces_counter = 12
-        self.turn_with_piece_taken = 1
+        self.turn_counter = 1 #Variable to keep track of the current turn
+        self.turn_with_piece_taken = 1 #Variable to keep track of the last turn a piece was taken.
         with open("gameTrace-false-5-10.txt", "w") as file:
             file.write("NEW GAME START!\n\nGAME PARAMETERS:\n")
             file.write("Timeout = 5\nMax Number of Turns = 100\nPlay Mode = H-H")
