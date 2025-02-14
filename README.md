@@ -43,8 +43,6 @@ The purpose of this project is to implement minimax, alpha-beta and develop adve
   - `check_win(game_state, move)`: Checks if the move results in a win.
   - `check_draw()`: Checks if the game has reached a draw condition.
   - `play()`: The main game loop that handles player input and game progression.
-- **Adversarial Search**: Implements the minimax algorithm with alpha-beta pruning.
-- **Heuristics**: Includes at least 2 evaluation functions to guide the AI's strategy.
 
 ## Dependencies
 
