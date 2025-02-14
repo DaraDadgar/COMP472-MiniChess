@@ -12,14 +12,12 @@ class MiniChess:
         self.pieces_counter = 12
         self.turn_with_piece_taken = 1
         with open("gameTrace-false-5-10.txt", "w") as file:
-            file.write("NEW GAME START!\n\n GAME PARAMETERS:\n")
+            file.write("NEW GAME START!\n\nGAME PARAMETERS:\n")
             file.write("Timeout = 5\nMax Number of Turns = 100\nPlay Mode = H-H")
-            file.write("\n\n\n Initial configuration:\n")
+            file.write("\n\nInitial configuration:\n")
             for i, row in enumerate(self.current_game_state["board"], start=1):
                 file.write(str(6 - i) + "  " + ' '.join(piece.rjust(3) for piece in row))
                 file.write("\n")
-
-            file.write("\nNEW GAME START\n")
     """
     Initialize the board
 
@@ -52,7 +50,6 @@ class MiniChess:
         - None
     """
     def display_board(self, game_state):
-        print()
         for i, row in enumerate(game_state["board"], start=1):
             print(str(6-i) + "  " + ' '.join(piece.rjust(3) for piece in row))
         print()
@@ -69,12 +66,9 @@ class MiniChess:
         - boolean representing the validity of the move
     """
     def is_valid_move(self, game_state, move):
-        # Check if move is in list of valid moves
-
-        #Stores the return value of the valid_moves function in a variable
-        #and checks if the move passed as an argument is in that list of valid moves.
-        valid_moves = self.valid_moves(game_state)
-        converted_move = self.unparse_input_v2(move)
+        valid_moves = self.valid_moves(game_state) #Stores the return value of the valid_moves function
+        converted_move = self.unparse_input_v2(move) #Unparses the move into chess terminology to make comparision with valid_moves easier
+        #Checks if the move is in the valid_moves list
         return converted_move in valid_moves
 
     """
@@ -86,10 +80,6 @@ class MiniChess:
         - valid moves:   list | A list of nested tuples corresponding to valid moves [((start_row, start_col),(end_row, end_col)),((start_row, start_col),(end_row, end_col))]
     """
     def valid_moves(self, game_state):
-        # Return a list of all the valid moves.
-        # Implement basic move validation
-        # Check for out-of-bounds, correct turn, move legality, etc
-
         #Creating a list of all valid moves which will be returned at the end of the funciton
         valid_moves = list()
         
@@ -98,22 +88,25 @@ class MiniChess:
         #Looping through each filled coordinate on the board
         for row_index, row in enumerate(game_state["board"]):
             for col_index, square in enumerate(row):
+                #Checking if the move's start position is not empty and it corresponds to the correct turn (white/black)
                 if (square[0] != '.' and square[0] == turn[0]):
-                    piece = square[1] #storing the piece type
-                    color = square[0] #storing the piece color
+                    piece_type = square[1] #storing the piece type
+                    piece_color = square[0] #storing the piece color
+                    #Converting the square coordinates to chess terminology
                     start_row = self.number_to_letter(col_index)
                     start_col = str(5-row_index)
-                    if (piece == "K"):
+                    #Checking the valid moves based on the piece type
+                    if (piece_type == "K"):
                        self.king_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)    
-                    if (piece == "N"):
+                    if (piece_type == "N"):
                         self.knight_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)
-                    if (piece == "p" and color == "w"):
+                    if (piece_type == "p" and piece_color == "w"):
                         self.white_pawn_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)
-                    if (piece == "p" and color == "b"):
+                    if (piece_type == "p" and piece_color == "b"):
                         self.black_pawn_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)
-                    if (piece == "B"):
+                    if (piece_type == "B"):
                         self.bishop_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)
-                    if (piece == "Q"):
+                    if (piece_type == "Q"):
                         self.queen_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)     
         return valid_moves
 
@@ -155,7 +148,7 @@ class MiniChess:
         return
     
     """
-    Updates the list of valid moves with the valid moves for the "Pawn" piece
+    Updates the list of valid moves with the valid moves for the "White Pawn" piece
     
     """
     def white_pawn_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves):
@@ -173,6 +166,10 @@ class MiniChess:
                             valid_moves.append(((start_row,start_col),(end_row,end_col)))   
         return 
     
+    """
+    Updates the list of valid moves with the valid moves for the "Black Pawn" piece
+    
+    """
     def black_pawn_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves):
         for i, row in enumerate(game_state["board"]):
             for j, square in enumerate(row):
@@ -189,13 +186,9 @@ class MiniChess:
         return 
 
     """
-    Converts the row numbers into letters for syntax validity
-
-    Args:
-        - number: int | integer value holding a row number
-    Returns:
-        - char | returns a single character corresponding to the conversion of the number to a letter
-    """
+    Updates the list of valid moves with the valid moves for the "Bishop" piece
+    
+    """  
     def bishop_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves):
         directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]  # top left, top right, bottom left, bottom right
         for d in directions:
@@ -216,6 +209,12 @@ class MiniChess:
                     break  
                 i += d[0]
                 j += d[1]
+        return 
+    
+    """
+    Updates the list of valid moves with the valid moves for the "Queen" piece
+    
+    """
 
     def queen_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves):
         directions = [(-1, -1), (-1, 1), (1, -1), (1, 1),  # bishop directions
@@ -239,18 +238,40 @@ class MiniChess:
                     break 
                 i += d[0]
                 j += d[1]
+        return
     
+    """
+    Converts the row numbers into letters for syntax validity
+
+    Args:
+        - number: int | integer value holding a row number
+    Returns:
+        - char | returns a single character corresponding to the conversion of the number to a letter
+    """
     def number_to_letter(self, number):
         return chr(number + ord("A"))
 
+    """
+    Logs the move information to the game file previously generated
+
+    Args:
+        - game_state: dict | the current game state dictionary
+        - move: tuple | the move as dictionary coordinates
+    """
     def log_move(self, game_state, move):
         board_move = self.unparse_input(move)
         start = board_move[0]
         end = board_move[1]
         with open("gameTrace-false-5-10.txt", "a") as file:
-            file.write("\nTurn #" + str(self.turn_counter) + "\n")
-            file.write("Player = " + game_state["turn"] + "\n")
+            file.write("\nPlayer = " + game_state["turn"] + "\n")
+            file.write("Turn #" + str(self.turn_counter) + "\n")
             file.write("Move from " + start + " to " + end + "\n")
+            file.write("New configuration:\n")
+            for i, row in enumerate(self.current_game_state["board"], start=1):
+                file.write(str(6 - i) + "  " + ' '.join(piece.rjust(3) for piece in row))
+                file.write("\n")
+        return
+    
     """
     Modify the board to make a move
 
@@ -301,6 +322,14 @@ class MiniChess:
         except:
             return None
 
+    """
+    Unparse the input string and modify it into chess terminology
+
+    Args:
+        - move: tuples representing a move "((1,2),(0,3))"
+    Returns:
+        - string representing a move "B2 B3"
+    """
     def unparse_input(self, move):
         try:
             start, end = move  # Extract start and end tuples
@@ -316,8 +345,14 @@ class MiniChess:
         except:
             return None  # Return None if an error occurs
 
-    #Redefined the unparse function with a different return value this time.
-    #used for convert the move passed as an arg to is_valid_move() to a value comparable to the list of valid moves
+    """
+    Unparse the input string and modify it into chess terminology (version 2)
+
+    Args:
+        - move: tuples representing a move "((1,2),(0,3))"
+    Returns:
+        - tuples representing the start and last move in chess terminology
+    """
     def unparse_input_v2(self, move):
         try:
             start, end = move  # Extract start and end tuples
@@ -371,7 +406,7 @@ class MiniChess:
     def check_draw(self):
         if self.turn_counter - self.turn_with_piece_taken >= 2: #edit to change number of turns till end of game
             with open("gameTrace-false-5-10.txt", "a") as file:
-                file.write("Match ended in a draw after " + str(self.turn_counter - 1) + " turns")
+                file.write("\nMatch ended in a draw after " + str(self.turn_counter - 1) + " turns")
             return True
         else:
             return False
@@ -385,7 +420,12 @@ class MiniChess:
         - None
     """
     def play(self):
+        #Printing the initial game information and initial board configuration
         print("Welcome to Mini Chess! Enter moves as 'B2 B3'. Type 'exit' to quit.")
+        print("NEW GAME START!\n\nGAME PARAMETERS:\n")
+        print("Timeout = 5\nMax Number of Turns = 100\nPlay Mode = H-H")
+        print("\n\nInitial configuration:\n")
+        self.display_board(self.current_game_state)
         while True:
 
             if self.check_draw():
@@ -396,7 +436,6 @@ class MiniChess:
                     file.write("\nTurn limit reached at " + str(self.turn_counter - 1) + " turns")
                 print("Max turn reached... ending game")
                 exit(1)
-            self.display_board(self.current_game_state)
             move = input(f"{self.current_game_state['turn'].capitalize()} to move: ")
             if move.lower() == 'exit':
                 print("Game exited.")
@@ -410,7 +449,16 @@ class MiniChess:
             #Auto checking if it's a valid move from previous statement
             win_condition = self.check_win(self.current_game_state, move)
 
+            #Making the move
             self.make_move(self.current_game_state, move)
+
+            #Printing the move information and the new board configuration
+            printable_move = self.unparse_input(move) #unparsing the move to convert it to chess terminology
+            print("\nPlayer = " + self.current_game_state["turn"])
+            print("Turn #" + str(self.turn_counter))
+            print("Move from " + printable_move[0] + " to " + printable_move[1])
+            print("New configuration:\n")
+            self.display_board(self.current_game_state)
 
             if win_condition == "White King captured! Black wins!":
                 print(win_condition)
