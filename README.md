@@ -57,5 +57,5 @@ The purpose of this project is to implement minimax, alpha-beta and develop adve
 2. Clone the repository or download the script.
 3. Run the script using the command:
    ```bash
-   python mini_chess.py
+   python MiniChess.py
    ```
