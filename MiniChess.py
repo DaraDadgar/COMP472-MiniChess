@@ -403,7 +403,7 @@ class MiniChess:
         - true if the round we have reached is a draw. False otherwise and game continues as normal
     """
     def check_draw(self):
-        if self.turn_counter - self.turn_with_piece_taken >= 2: #edit to change number of turns till end of game
+        if self.turn_counter - self.turn_with_piece_taken >= 10: #edit to change number of turns till end of game
             with open("gameTrace-false-5-10.txt", "a") as file:
                 file.write("\nMatch ended in a draw after " + str(self.turn_counter - 1) + " turns")
             return True
@@ -430,7 +430,7 @@ class MiniChess:
             if self.check_draw():
                 print("Players draw... ending game")
                 exit(1)
-            if self.turn_counter>2:
+            if self.turn_counter>200:
                 with open("gameTrace-false-5-10.txt", "a") as file:
                     file.write("\nTurn limit reached at " + str(self.turn_counter - 1) + " turns")
                 print("Max turn reached... ending game")
