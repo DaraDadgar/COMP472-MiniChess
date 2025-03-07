@@ -37,7 +37,7 @@ The purpose of this project is to implement minimax, alpha-beta and develop adve
   - `number_to_letter(self, number)`: Converts the row numbers into letters for syntax validity
   - `log_move(self, game_state, move)`: Logs the move information to the game file previously generated
   - `parse_input(self, move)`: Parse the input string and modify it into board coordinates
-  - `unparse_input(self, move)`: Unparse the input string and modify it into chess terminology
+  - `unparse_input(self, move)`: Unparse the input string and modify it into chess terminology.
   - `unparse_input_v2(self, move)`: Unparse the input string and modify it into chess terminology (version 2)
   - `make_move(game_state, move)`: Updates the game state based on the move.
   - `check_win(game_state, move)`: Checks if the move results in a win.
