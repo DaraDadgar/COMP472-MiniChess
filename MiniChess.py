@@ -4,7 +4,7 @@ import time
 import argparse
 from xml.etree.ElementTree import tostring
 
-from selenium.webdriver.common.devtools.v85.runtime import evaluate
+# from selenium.webdriver.common.devtools.v85.runtime import evaluate
 
 
 class MiniChess:
@@ -14,7 +14,7 @@ class MiniChess:
         self.turn_with_piece_taken = 1 #Variable to keep track of the last turn a piece was taken.
         self.algorithm = True # True = alpha-beta | false = minimax
         self.heuristic = 0 # controls which heuristic to use
-        self.depth = 3 # How deep is your love (CHANGE BEFORE SUBMISSION) | this the depth of how far we checkin lols
+        self.depth = 3 #TODO: How deep is your love (CHANGE BEFORE SUBMISSION) | this the depth of how far we checkin lols
         with open("gameTrace-false-5-10.txt", "w") as file:
             file.write("NEW GAME START!\n\nGAME PARAMETERS:\n")
             file.write("Timeout = 5\nMax Number of Turns = 100\nPlay Mode = H-H")
@@ -290,23 +290,30 @@ class MiniChess:
         end = move[1]
         start_row, start_col = start
         end_row, end_col = end
+        #Update the turn_with_piece_taken if a piece is taken
         if  game_state["board"][end_row][end_col] != '.':
             self.turn_with_piece_taken = self.turn_counter
+        #store the piece value in a variable
         piece = game_state["board"][start_row][start_col]
+        #Replace the starting position with a '.' and move the piece to the end location
         game_state["board"][start_row][start_col] = '.'
         game_state["board"][end_row][end_col] = piece
+        #Logging the move performed
         self.log_move(game_state,move)
+        #Promoting the pawns if they reach the end row
         if piece == "wp" and end_row == 0:
             game_state["board"][end_row][end_col] = "wQ"
         if piece == "bp" and end_row == 4:
             game_state["board"][end_row][end_col] = "bQ"
+        #Switiching the turn once the move is successfuly performed
         if game_state["turn"] == "white":
             game_state["turn"] = "black"
         else:
             game_state["turn"] = "white"
+        #Increase the turn counter and print it
             self.turn_counter += 1
             print(self.turn_counter)
-
+        #return the new game state after the move has been performed
         return game_state
 
     """
@@ -326,6 +333,14 @@ class MiniChess:
         except:
             return None
 
+    """
+    Parse a valid_moves string and modify it into board coordinates
+
+    Args:
+        - move: string representing a validl move "((B, 2), (B, 3))"
+    Returns:
+        - (start, end)  tuple | the move to perform ((start_row, start_col),(end_row, end_col))
+    """
     def parse_input_v2(self, move):
         try:
             start, end = move  # Unpack the input tuple (e.g., ((B, 2), (B, 3)))
@@ -429,21 +444,43 @@ class MiniChess:
         else:
             return False
 
+    """
+    Evaluates a board state and updates the heuristic score based on the heuristic chosen
+    NOTE: White player tries to maximies and Black player tries to minimize in all heuristics
+
+    Args:
+        - game_state: dictionary | Dictionary representing the current game state
+    Returns:
+        - score: integer value representing the heuristic score of the board state passed as a parameter to the function
+    """
     def evaluate_board(self, game_state):
         #if self.heuristic == 0:     #UNCOMMENT TO ADD OTHER HEURISTICS
             piece_values = {"K": 999, "Q": 9, "B": 3, "N": 3, "p": 1}
             score = 0
+            #Assigning values to each piece on the board based on the heuristic function defined
             for row in game_state["board"]:
                 for square in row:
                     if square != ".":
                         value = piece_values[square[1]]
-                        score += value if square[0] == "w" else -value
+                        #Increase the value of score if it is a white piece, otherwise decrease
+                        score += value if square[0] == "w" else -value 
             return score
         #elif self.heuristic == 1:   #UNCOMMENT TO ADD OTHER HEURISTICS
             #HEURISTIC 1             #UNCOMMENT TO ADD OTHER HEURISTICS
         #else                        #UNCOMMENT TO ADD OTHER HEURISTICS
             #HEURISTIC 2
 
+    """
+    Simulates a move on the board. Used by the minimax and alpha-beta algorithms to find the heuristic value of a new board state.
+
+    Args:
+        - game_state: dictionary | Dictionary representing the current game state
+        - move: tuple representing a move ((start_row, start_col),(end_row, end_col))
+    Returns:
+        - piece: the type of piece that made the move
+        - captured_piece: the piece type that was captured after performing the move
+        - game_state: the new modified game_state after the move was performed
+    """
     def simulate_make_move(self, game_state, move):
         ## SIMPLIFIED MAKE MOVE FUNCTION
 
@@ -467,8 +504,7 @@ class MiniChess:
 
         return piece,captured_piece, game_state
 
-    def simulate_unmake_move(self, game_state, move, captured_piece, original_piece):
-        """
+    """
         Reverts a move on the game_state by restoring the piece's previous position
         and the captured piece (if any).
 
@@ -479,7 +515,8 @@ class MiniChess:
             :param game_state:
             :param captured_piece:
             :param original_piece:
-        """
+    """
+    def simulate_unmake_move(self, game_state, move, captured_piece, original_piece):
         start, end = move
         piece = original_piece
 
@@ -562,19 +599,31 @@ class MiniChess:
             if current_Alpha >= current_Beta: break  # PRUNE SIBLINGS
         return current_best_move, current_best_heuristic
 
+    """
+    AI minimax function. Recursively expands the game tree from the given current_depth 
+    and finds the best move to be performed by the AI.
+
+    Args:
+        - game_state: dictionary | Dictionary representing the current game state
+        - current_depth: integer value representing the current depth of the game tree being explored
+    Returns:
+        - best_move: the best move from the current board state after developing the full game tree
+        - best_value: the heuristic value of the best move to be taken 
+    """
     def minimax(self, game_state, current_depth):
         # Get the list of valid moves and evaluate the current board.
         MoveList = self.valid_moves(game_state)
         current_board_value = self.evaluate_board(game_state)
 
-        # Terminal condition: No moves available or reached maximum depth.
+        # Terminal condition: No moves available(win, loss or draw) or reached maximum depth.
+        #TODO: make sure the valid_moves is empty after a draw, win or loss??
         if not MoveList:
             return (None, current_board_value)
         if current_depth == self.depth:
             return (None, current_board_value)
 
-        # Determine if this is a max node (AI's turn) or min node (opponent's turn)
-        if current_depth % 2 == 1:  # Max node (AI's turn)
+        # Determine if this is a max node/white's turn or a min node/black's turn
+        if current_depth % 2 == 1:  # Max node (turn = white)
             best_value = -math.inf
             best_move = None
             for move in MoveList:
@@ -596,7 +645,7 @@ class MiniChess:
                     best_move = move
 
             return (best_move, best_value)
-        else:  # Min node (Opponent's turn)
+        else:  # Min node (black = turn)
             best_value = math.inf
             best_move = None
             for move in MoveList:
@@ -612,14 +661,23 @@ class MiniChess:
 
             return (best_move, best_value)
 
+    """
+    Return the best move to be performed by the AI after running either minimax or alpha-beta algorithms.
+
+    Args:
+        - game_state: dictionary | Dictionary representing the current game state
+    Returns:
+        - best_move: the best move to be performed by the AI from the current board state after developing the full game tree
+    """
     def AI_makeMove(self, game_state):
         if self.algorithm: results = self.alpha_beta(game_state,1,-15000,15000) #UNCOMMENT WHEN MINIMAX IS IMPLEMENTED
         else: results = self.minimax(game_state,1)                            #UNCOMMENT WHEN MINIMAX IS IMPLEMENTED
+        #returns the best move found using either alpha-beta or minimax algorithm
         return results[0]
 
-
     """
-    Game loop
+    Main game loop which inputs the user to choose their prefered game mode and game parameters
+    and launches that game mode
     
     Args:
         - None
@@ -678,6 +736,14 @@ class MiniChess:
                     file.write("\nBlack King captured! White wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
 
+    """
+    AI vs Human game mode
+    
+    Args:
+        - None
+    Returns:
+        - None
+    """
     def play_AI_Human(self):
         #Printing the initial game information and initial board configuration
         print("Welcome to Mini Chess! Enter moves as 'B2 B3'. Type 'exit' to quit.")
@@ -734,6 +800,7 @@ class MiniChess:
                 with open("gameTrace-false-5-10.txt", "a") as file:
                     file.write("\nBlack King captured! White wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
+
 if __name__ == "__main__":
     #Creating an instance of MiniChess
     game = MiniChess()
