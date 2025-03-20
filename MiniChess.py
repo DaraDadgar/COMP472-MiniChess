@@ -15,6 +15,7 @@ class MiniChess:
         self.algorithm = False # True = alpha-beta | False = minimax
         self.heuristic = 0 # controls which heuristic to use
         self.depth = 3 #TODO: How deep is your love (CHANGE BEFORE SUBMISSION) | this the depth of how far we checkin lols
+        self.invalid_move_counter = 0 #variable used to end the game if a human enters two invalid moves
         with open("gameTrace-false-5-10.txt", "w") as file:
             file.write("NEW GAME START!\n\nGAME PARAMETERS:\n")
             file.write("Timeout = 5\nMax Number of Turns = 100\nPlay Mode = H-H")
@@ -731,6 +732,7 @@ class MiniChess:
                     file.write("\nTurn limit reached at " + str(self.turn_counter - 1) + " turns")
                 print("Max turn reached... ending game")
                 exit(1)
+            #Asking the user for their move input
             move = input(f"{self.current_game_state['turn'].capitalize()} to move: ")
             if move.lower() == 'exit':
                 print("Game exited.")
@@ -738,9 +740,25 @@ class MiniChess:
 
             move = self.parse_input(move)
             if not move or not self.is_valid_move(self.current_game_state, move):
-                print("Invalid move. Try again.")
-                continue
-
+              if (self.invalid_move_counter < 2):
+                  self.invalid_move_counter += 1 #incrementing the count of invalid moves
+                  #Ending the game if two invalid moves are entered
+                  if(self.invalid_move_counter == 2):
+                    print("You entered two invalid moves in a row!")
+                    if (self.current_game_state["turn"] == "white"):
+                        print("Black wins!")
+                        exit(1)
+                    else:
+                        print("White wins!")   
+                        exit(1)
+                  #Otherwise, we alert the user for thier invalid move and continue the loop
+                  else:
+                    print("Invalid move. Try again.")
+                    continue
+            
+            #Reseting the invalid_move_counter for reuse in next turns
+            self.invalid_move_counter = 0
+            
             #Auto checking if it's a valid move from previous statement
             win_condition = self.check_win(self.current_game_state, move)
 
@@ -806,8 +824,7 @@ class MiniChess:
                 if not move or not self.is_valid_move(self.current_game_state, move):
                     print("Invalid move. Try again.")
                     continue
-
-
+                    
             #Auto checking if it's a valid move from previous statement
             win_condition = self.check_win(self.current_game_state, move)
 
