@@ -494,17 +494,20 @@ class MiniChess:
                     if square == "bK":
                         blackKing = True
 
-            # #Adjusting the score value based on the total number of valid_moves for the current game_state
-            # if (game_state["turn"] == "white"):
-            #     num_white_moves = len(self.valid_moves(game_state)) * 0.1
-            # else:
-            #     game_state["turn"] = "black"
-            #     num_black_moves = len(self.valid_moves(game_state)) * 0.1
-            #     game_state["turn"] = "white"
+            #Adjusting the score value based on the total number of valid_moves for the current game_state
+            if (game_state["turn"] == "white"):
+                num_white_moves = len(self.valid_moves(game_state)) * 0.1
+                game_state["turn"] = "black"
+                num_black_moves = len(self.valid_moves(game_state)) * 0.1
+                game_state["turn"] = "white"
+            else:
+                num_black_moves = len(self.valid_moves(game_state)) * 0.1
+                game_state["turn"] = "white"
+                num_white_moves = len(self.valid_moves(game_state)) * 0.1
+                game_state["turn"] = "black"
                 
-            # score += num_white_moves - num_black_moves
-
-            
+            score += (num_white_moves - num_black_moves)
+            print("New score: " + str(score))
 
             if whiteKing == False or blackKing == False: return True,score
             return False,score
