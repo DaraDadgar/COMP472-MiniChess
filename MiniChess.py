@@ -669,12 +669,24 @@ class MiniChess:
         - game_state: dictionary | Dictionary representing the current game state
     Returns:
         - best_move: the best move to be performed by the AI from the current board state after developing the full game tree
+        - eval_time: the time taken to find the best move using the algorithm chosen
     """
     def AI_makeMove(self, game_state):
-        if self.algorithm: results = self.alpha_beta(game_state,1,-15000,15000) #UNCOMMENT WHEN MINIMAX IS IMPLEMENTED
-        else: results = self.minimax(game_state,1)                            #UNCOMMENT WHEN MINIMAX IS IMPLEMENTED
-        #returns the best move found using either alpha-beta or minimax algorithm
-        return results[0]
+        if self.algorithm: 
+            start = time.time() #starting a timer before the algorithm method is called
+            results = self.alpha_beta(game_state,1,-15000,15000)
+            end = time.time() #ending the timer once the algorithm finishes execution
+        else: 
+            start = time.time()
+            results = self.minimax(game_state,1) 
+            end = time.time()  
+        #Computing the evalutation time to find the best move
+        eval_time = round(end - start, 7)
+        #Storing the best move found by the algorithm chosen
+        best_move = results[0]                       
+        #returns the best move found using either alpha-beta or minimax algorithm and the time taken to find that move
+        result_info = best_move, eval_time
+        return result_info
 
     """
     Main game loop which inputs the user to choose their prefered game mode and game parameters
@@ -813,8 +825,11 @@ class MiniChess:
                 exit(1)
             print(f"{self.current_game_state['turn'].capitalize()} to move: ")
             if self.current_game_state['turn'] == "white":
-                move = self.AI_makeMove(self.current_game_state)
+                move_info = self.AI_makeMove(self.current_game_state)
+                #Unloading the first element of the tuple (best_move) into a move variable
+                move = move_info[0]
                 print(self.unparse_input(move))
+                print("Time taken to find the move: " + str(move_info[1]) + " seconds")
             else:
                 move = input()
                 if move.lower() == 'exit':
