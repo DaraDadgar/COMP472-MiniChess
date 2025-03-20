@@ -683,7 +683,8 @@ class MiniChess:
         #Computing the evalutation time to find the best move
         eval_time = round(end - start, 7)
         #Storing the best move found by the algorithm chosen
-        best_move = results[0]                       
+        best_move = results[0]    
+        
         #returns the best move found using either alpha-beta or minimax algorithm and the time taken to find that move
         result_info = best_move, eval_time
         return result_info
@@ -828,6 +829,10 @@ class MiniChess:
                 move_info = self.AI_makeMove(self.current_game_state)
                 #Unloading the first element of the tuple (best_move) into a move variable
                 move = move_info[0]
+                #Make the AI lose if the best move found is not the current list of valid moves
+                if not self.is_valid_move(self.current_game_state, move):
+                    print("Invalid move entered by the AI! The Human wins.")
+                    exit(1)
                 print(self.unparse_input(move))
                 print("Time taken to find the move: " + str(move_info[1]) + " seconds")
             else:
