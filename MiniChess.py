@@ -618,23 +618,31 @@ class MiniChess:
             move_heuristic = board_heuristic
             end_row, end_col = move[1]
             if (current_depth % 2) == 1 : # parent is a max node | AI's turn | we're looking for the max
-                if game_state["board"][end_row][end_col] != ".":
-                    value = piece_values[game_state["board"][end_row][end_col][1]]
-                    move_heuristic -= value if game_state["board"][end_row][end_col][0] == "w" else -value
-                    # Compensate diff for pawn promotion
-                    if game_state["board"][end_row][end_col] == "wp" and end_row == 0: move_heuristic += 8
-                    if game_state["board"][end_row][end_col] == "bp" and end_row == 5: move_heuristic -= 8
+                original_piece, captured_piece, game_state = self.simulate_make_move(game_state, move)
+                ignore, move_heuristic = self.evaluate_board(game_state)
+                game_state = self.simulate_unmake_move(game_state, move, captured_piece, original_piece)  # Restore board history
+                # if game_state["board"][end_row][end_col] != ".":
+                #     value = piece_values[game_state["board"][end_row][end_col][1]]
+                #     move_heuristic -= value if game_state["board"][end_row][end_col][0] == "w" else -value
+                #     # Compensate diff for pawn promotion
+                #     if game_state["board"][end_row][end_col] == "wp" and end_row == 0: move_heuristic += 8
+                #     if game_state["board"][end_row][end_col] == "bp" and end_row == 5: move_heuristic -= 8
+
                 if move_heuristic > current_best_heuristic:
                     current_best_heuristic = move_heuristic
                     current_best_move = move
                     current_Alpha = current_best_heuristic
             else : # parent is a min node | opponent's turn | we're looking for the minimum
-                if game_state["board"][end_row][end_col] != ".":
-                    value = piece_values[game_state["board"][end_row][end_col][1]]
-                    move_heuristic -= value if game_state["board"][end_row][end_col][0] == "w" else -value
-                    # Compensate diff for pawn promotion
-                    if game_state["board"][end_row][end_col] == "wp" and end_row==0: move_heuristic += 8
-                    if game_state["board"][end_row][end_col] == "bp" and end_row == 5: move_heuristic -= 8
+                original_piece, captured_piece, game_state = self.simulate_make_move(game_state, move)
+                ignore, move_heuristic = self.evaluate_board(game_state)
+                game_state = self.simulate_unmake_move(game_state, move, captured_piece, original_piece)  # Restore board history
+
+                # if game_state["board"][end_row][end_col] != ".":
+                #     value = piece_values[game_state["board"][end_row][end_col][1]]
+                #     move_heuristic -= value if game_state["board"][end_row][end_col][0] == "w" else -value
+                #     # Compensate diff for pawn promotion
+                #     if game_state["board"][end_row][end_col] == "wp" and end_row==0: move_heuristic += 8
+                #     if game_state["board"][end_row][end_col] == "bp" and end_row == 5: move_heuristic -= 8
 
                 if move_heuristic < current_best_heuristic:
                     current_best_heuristic = move_heuristic
