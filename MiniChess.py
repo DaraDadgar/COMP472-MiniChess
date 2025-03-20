@@ -411,26 +411,23 @@ class MiniChess:
             return False
 
     """
-    Game loop
-    
-    Args:
+    Human vs Human Game Mode
+
+    Args: 
         - None
     Returns:
         - None
     """
-    def play(self):
-        #Printing the initial game information and initial board configuration
-        print("Welcome to Mini Chess! Enter moves as 'B2 B3'. Type 'exit' to quit.")
-        print("NEW GAME START!\n\nGAME PARAMETERS:\n")
-        print("Timeout = 5\nMax Number of Turns = 100\nPlay Mode = H-H")
-        print("\n\nInitial configuration:\n")
+    def H_H(self,max_turn):
+        print("NEW \"Human vs Human\" GAME START!\n\nGAME PARAMETERS:\n")
+        print("Max Number of Turns = " + max_turn + "\nPlay Mode = H-H")
+        print("\nInitial configuration:\n")
         self.display_board(self.current_game_state)
         while True:
-
             if self.check_draw():
                 print("Players draw... ending game")
                 exit(1)
-            if self.turn_counter>200:
+            if self.turn_counter> int(max_turn):
                 with open("gameTrace-false-5-10.txt", "a") as file:
                     file.write("\nTurn limit reached at " + str(self.turn_counter - 1) + " turns")
                 print("Max turn reached... ending game")
@@ -439,12 +436,11 @@ class MiniChess:
             if move.lower() == 'exit':
                 print("Game exited.")
                 exit(1)
-
             move = self.parse_input(move)
             if not move or not self.is_valid_move(self.current_game_state, move):
                 print("Invalid move. Try again.")
                 continue
-
+            
             #Auto checking if it's a valid move from previous statement
             win_condition = self.check_win(self.current_game_state, move)
 
@@ -458,7 +454,6 @@ class MiniChess:
             print("Move from " + printable_move[0] + " to " + printable_move[1])
             print("New configuration:\n")
             self.display_board(self.current_game_state)
-
             if win_condition == "White King captured! Black wins!":
                 print(win_condition)
                 with open("gameTrace-false-5-10.txt", "a") as file:
@@ -469,6 +464,206 @@ class MiniChess:
                 with open("gameTrace-false-5-10.txt", "a") as file:
                     file.write("\nBlack King captured! White wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
+
+    """
+    Human vs AI Game Mode
+
+    Args: 
+        - None
+    Returns:
+        - None
+    """
+    def H_AI(self, timeout, max_turn, search_type, is_human_white=False, is_human_black=True):
+        print("NEW \"Human vs AI\" GAME START!\n\nGAME PARAMETERS:\n")
+        print("Timeout = " + timeout + "\nMax Number of Turns = " + max_turn + "\nPlay Mode = H-AI")
+        print("\n\nInitial configuration:\n")
+        self.display_board(self.current_game_state)
+        while True:
+            if self.check_draw():
+                print("Players draw... ending game")
+                exit(1)
+            if self.turn_counter>200:
+                with open("gameTrace-false-5-10.txt", "a") as file:
+                    file.write("\nTurn limit reached at " + str(self.turn_counter - 1) + " turns")
+                print("Max turn reached... ending game")
+                exit(1)
+            #if (self.current_game_state{})
+            move = input(f"{self.current_game_state['turn'].capitalize()} to move: ")
+            if move.lower() == 'exit':
+                print("Game exited.")
+                exit(1)
+            move = self.parse_input(move)
+            if not move or not self.is_valid_move(self.current_game_state, move):
+                print("Invalid move. Try again.")
+                continue
+            
+            #Auto checking if it's a valid move from previous statement
+            win_condition = self.check_win(self.current_game_state, move)
+
+            #Making the move
+            self.make_move(self.current_game_state, move)
+
+            #Printing the move information and the new board configuration
+            printable_move = self.unparse_input(move) #unparsing the move to convert it to chess terminology
+            print("\nPlayer = " + self.current_game_state["turn"])
+            print("Turn #" + str(self.turn_counter))
+            print("Move from " + printable_move[0] + " to " + printable_move[1])
+            print("New configuration:\n")
+            self.display_board(self.current_game_state)
+            if win_condition == "White King captured! Black wins!":
+                print(win_condition)
+                with open("gameTrace-false-5-10.txt", "a") as file:
+                    file.write("\nWhite King captured! Black wins after " + str(self.turn_counter - 1) + " turns")
+                exit(1)
+            elif win_condition == "Black King captured! White wins!":
+                print(win_condition)
+                with open("gameTrace-false-5-10.txt", "a") as file:
+                    file.write("\nBlack King captured! White wins after " + str(self.turn_counter - 1) + " turns")
+                exit(1)
+
+    
+    """
+    AI vs Human Game Mode
+
+    Args: 
+        - None
+    Returns:
+        - None
+    """
+    def AI_H(self):
+        print("NEW \"AI vs Human\" GAME START!\n\nGAME PARAMETERS:\n")
+        print("Timeout = 5\nMax Number of Turns = 100\nPlay Mode = AI-H")
+        print("\n\nInitial configuration:\n")
+        self.display_board(self.current_game_state)
+        while True:
+            if self.check_draw():
+                print("Players draw... ending game")
+                exit(1)
+            if self.turn_counter>200:
+                with open("gameTrace-false-5-10.txt", "a") as file:
+                    file.write("\nTurn limit reached at " + str(self.turn_counter - 1) + " turns")
+                print("Max turn reached... ending game")
+                exit(1)
+            move = input(f"{self.current_game_state['turn'].capitalize()} to move: ")
+            if move.lower() == 'exit':
+                print("Game exited.")
+                exit(1)
+            move = self.parse_input(move)
+            if not move or not self.is_valid_move(self.current_game_state, move):
+                print("Invalid move. Try again.")
+                continue
+            
+            #Auto checking if it's a valid move from previous statement
+            win_condition = self.check_win(self.current_game_state, move)
+
+            #Making the move
+            self.make_move(self.current_game_state, move)
+
+            #Printing the move information and the new board configuration
+            printable_move = self.unparse_input(move) #unparsing the move to convert it to chess terminology
+            print("\nPlayer = " + self.current_game_state["turn"])
+            print("Turn #" + str(self.turn_counter))
+            print("Move from " + printable_move[0] + " to " + printable_move[1])
+            print("New configuration:\n")
+            self.display_board(self.current_game_state)
+            if win_condition == "White King captured! Black wins!":
+                print(win_condition)
+                with open("gameTrace-false-5-10.txt", "a") as file:
+                    file.write("\nWhite King captured! Black wins after " + str(self.turn_counter - 1) + " turns")
+                exit(1)
+            elif win_condition == "Black King captured! White wins!":
+                print(win_condition)
+                with open("gameTrace-false-5-10.txt", "a") as file:
+                    file.write("\nBlack King captured! White wins after " + str(self.turn_counter - 1) + " turns")
+                exit(1)
+
+    """
+    AI vs AI Game Mode
+
+    Args: 
+        - None
+    Returns:
+        - None
+    """
+    def AI_AI(self):
+        print("NEW \"AI vs AI\" GAME START!\n\nGAME PARAMETERS:\n")
+        print("Timeout = 5\nMax Number of Turns = 100\nPlay Mode = AI-AI")
+        print("\n\nInitial configuration:\n")
+        self.display_board(self.current_game_state)
+        while True:
+            if self.check_draw():
+                print("Players draw... ending game")
+                exit(1)
+            if self.turn_counter>200:
+                with open("gameTrace-false-5-10.txt", "a") as file:
+                    file.write("\nTurn limit reached at " + str(self.turn_counter - 1) + " turns")
+                print("Max turn reached... ending game")
+                exit(1)
+            move = input(f"{self.current_game_state['turn'].capitalize()} to move: ")
+            if move.lower() == 'exit':
+                print("Game exited.")
+                exit(1)
+            move = self.parse_input(move)
+            if not move or not self.is_valid_move(self.current_game_state, move):
+                print("Invalid move. Try again.")
+                continue
+            
+            #Auto checking if it's a valid move from previous statement
+            win_condition = self.check_win(self.current_game_state, move)
+
+            #Making the move
+            self.make_move(self.current_game_state, move)
+
+            #Printing the move information and the new board configuration
+            printable_move = self.unparse_input(move) #unparsing the move to convert it to chess terminology
+            print("\nPlayer = " + self.current_game_state["turn"])
+            print("Turn #" + str(self.turn_counter))
+            print("Move from " + printable_move[0] + " to " + printable_move[1])
+            print("New configuration:\n")
+            self.display_board(self.current_game_state)
+            if win_condition == "White King captured! Black wins!":
+                print(win_condition)
+                with open("gameTrace-false-5-10.txt", "a") as file:
+                    file.write("\nWhite King captured! Black wins after " + str(self.turn_counter - 1) + " turns")
+                exit(1)
+            elif win_condition == "Black King captured! White wins!":
+                print(win_condition)
+                with open("gameTrace-false-5-10.txt", "a") as file:
+                    file.write("\nBlack King captured! White wins after " + str(self.turn_counter - 1) + " turns")
+                exit(1)
+
+    """
+    Game loop
+    
+    Args:
+        - None
+    Returns:
+        - None
+    """
+    def play(self):
+        #Printing the initial game information and initial board configuration
+        print("Welcome to Mini Chess! Select the game mode:")
+        print("1 - Human vs Human")
+        print("2 - Human vs AI")
+        print("3 - AI vs Human")
+        print("4 - AI vs AI")
+        #Saving the user's game mode selection
+        game_mode = input()
+        #Match-Case to run the corresponding game mode based on the user's selection
+        match game_mode:
+            case "1":
+                max_turn = input("Enter the max number of turns allowed: ")  
+                print()              
+                self.H_H(max_turn)
+            case "2":
+                timeout = input("Enter the program timeout time: ")
+                max_turn = input("Enter the max number of turns allowed: ")
+                search_type = input("Select the Adversial Search Type for the AI (0 for minimax and 1 for alpha-beta): ")
+                self.H_AI(timeout, max_turn, search_type)
+            case "3": 
+                self.AI_H()
+            case "4":
+                self.AI_AI()
 
 if __name__ == "__main__":
     #Creating an instance of MiniChess
