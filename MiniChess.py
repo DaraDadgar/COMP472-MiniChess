@@ -2,6 +2,7 @@ import math
 import copy
 import time
 import argparse
+from string import whitespace
 from xml.etree.ElementTree import tostring
 
 # from selenium.webdriver.common.devtools.v85.runtime import evaluate
@@ -14,7 +15,7 @@ class MiniChess:
         self.turn_with_piece_taken = 1 #Variable to keep track of the last turn a piece was taken.
         self.algorithm = None # True = alpha-beta | False = minimax
         self.heuristic = 0 # controls which heuristic to use
-        self.depth = 3 #this the depth of how far we are exploring in the game tree 
+        self.depth = 3 #this the depth of how far we are exploring in the game tree
         self.invalid_move_counter = 0 #variable used to end the game if a human enters two invalid moves
         with open("gameTrace-false-5-10.txt", "w") as file:
             file.write("NEW GAME START!\n\nGAME PARAMETERS:\n")
@@ -458,14 +459,22 @@ class MiniChess:
         #if self.heuristic == 0:     #UNCOMMENT TO ADD OTHER HEURISTICS
             piece_values = {"K": 999, "Q": 9, "B": 3, "N": 3, "p": 1}
             score = 0
+            blackKing = False
+            whiteKing = False
             #Assigning values to each piece on the board based on the heuristic function defined
             for row in game_state["board"]:
                 for square in row:
                     if square != ".":
                         value = piece_values[square[1]]
                         #Increase the value of score if it is a white piece, otherwise decrease
-                        score += value if square[0] == "w" else -value 
-            return score
+                        score += value if square[0] == "w" else -value
+                    if square == "wK":
+                        whiteKing = True
+                    if square == "bK":
+                        blackKing = True
+
+            if whiteKing == False or blackKing == False: return True,score
+            return False,score
         #elif self.heuristic == 1:   #UNCOMMENT TO ADD OTHER HEURISTICS
             #HEURISTIC 1             #UNCOMMENT TO ADD OTHER HEURISTICS
         #else                        #UNCOMMENT TO ADD OTHER HEURISTICS
@@ -535,8 +544,8 @@ class MiniChess:
     def alpha_beta(self, game_state, current_depth, alpha, beta):
         piece_values = {"K": 999, "Q": 9, "B": 3, "N": 3, "p": 1}
         MoveList = self.valid_moves(game_state)
-        board_heuristic = self.evaluate_board(game_state)
-        if not MoveList:  # No valid moves, return heuristic as is (Case if parent is win/loss condition)
+        game_end,board_heuristic = self.evaluate_board(game_state)
+        if game_end:  # No valid moves, return heuristic as is (Case if parent is win/loss condition)
             return (None, board_heuristic)
 
         if current_depth % 2 == 1:  # Max node (AI's turn)
@@ -548,7 +557,7 @@ class MiniChess:
         current_Beta = beta
         # Loop start to evaluate children
         for move in MoveList:
-            move = self.parse_input_v2(move)
+            move = self.parse_input_v2(move) # ((A,2),(B,2)) => ((3,0),(
             # Will do recursion to go to children for internal nodes
             if current_depth < self.depth:  # If we're not at the max depth then go one layer down by simulating the move
                 original_piece,captured_piece, game_state = self.simulate_make_move(game_state, move)
@@ -560,7 +569,7 @@ class MiniChess:
                     game_state = self.simulate_unmake_move(game_state, move, captured_piece, original_piece) # Restore board history
                     if current_Alpha >= current_Beta: break  # PRUNE SIBLINGS
                     continue # Evaluate next move
-                elif results[1] < current_best_heuristic: # parent is a min node | opponent's turn | we're looking for the minimum
+                elif (current_depth % 2) == 0 and results[1] < current_best_heuristic: # parent is a min node | opponent's turn | we're looking for the minimum
                     current_best_heuristic = results[1]
                     current_best_move = move
                     current_Beta = results[1]
@@ -674,7 +683,13 @@ class MiniChess:
     """
     def AI_makeMove(self, game_state, turn):
         #Determine the starting depth based on the AI's turn
-        start_depth = 1 if turn == "white" else 2
+        revertDepth = False
+        if turn == "white":
+            start_depth = 1
+        else:
+            start_depth = 2
+            self.depth += 1
+            revertDepth = True
         
         if self.algorithm: 
             start = time.time() #starting a timer before the algorithm method is called
@@ -684,7 +699,10 @@ class MiniChess:
             start = time.time()
             results = self.minimax(game_state,start_depth) 
             end = time.time()
-        
+
+        if revertDepth:
+            self.depth -= 1
+            revertDepth = False
         #Computing the evalutation time to find the best move
         eval_time = round(end - start, 7)
         #Storing the best move found by the algorithm chosen
