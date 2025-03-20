@@ -662,12 +662,10 @@ class MiniChess:
             return (best_move, best_value)
 
     def AI_makeMove(self, game_state):
-        start_time = time.time() 
-
+        start_time = time.perf_counter() 
         if self.algorithm: results = self.alpha_beta(game_state,1,-15000,15000) #UNCOMMENT WHEN MINIMAX IS IMPLEMENTED
         else: results = self.minimax(game_state,1)                            #UNCOMMENT WHEN MINIMAX IS IMPLEMENTED
-        
-        end_time = time.time()
+        end_time = time.perf_counter()
         ai_time_taken = end_time - start_time
 
         # track AI statistics
@@ -675,15 +673,15 @@ class MiniChess:
         depth_stats = self.depth_exploration_stats
         # apply the move
         best_move, search_score = results
-        self.make_move(game_state, best_move)
-
-        self.log_move(
-            game_state, best_move, ai_time_taken,
-            self.evaluate_board(game_state), search_score,
-            states_explored, depth_stats
-        )
-
-        return best_move
+        # self.make_move(game_state, best_move)
+        heuristic_score = self.evaluate_board(game_state)
+        self.log_move(game_state, best_move, ai_time_taken, heuristic_score, search_score=0, states_explored=0, depth_stats=None)
+        #     game_state, best_move, ai_time_taken,
+        #     self.evaluate_board(game_state), search_score,
+        #     states_explored, depth_stats
+        # )
+        
+        return results[0]
 
 
     """
@@ -769,6 +767,7 @@ class MiniChess:
             print(f"{self.current_game_state['turn'].capitalize()} to move: ")
             if self.current_game_state['turn'] == "white":
                 move = self.AI_makeMove(self.current_game_state)
+                
                 print(self.unparse_input(move))
             else:
                 move = input()
