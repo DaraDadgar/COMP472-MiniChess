@@ -4,7 +4,7 @@ import time
 import argparse
 from xml.etree.ElementTree import tostring
 
-from selenium.webdriver.common.devtools.v85.runtime import evaluate
+# from selenium.webdriver.common.devtools.v85.runtime import evaluate
 
 
 class MiniChess:
@@ -262,29 +262,65 @@ class MiniChess:
         - game_state: dict | the current game state dictionary
         - move: tuple | the move as dictionary coordinates
     """
-    def log_move(self, game_state, move):
-        board_move = self.unparse_input(move)
-        start = board_move[0]
-        end = board_move[1]
-        with open("gameTrace-false-5-10.txt", "a") as file:
+    def log_move(self, game_state, move, ai_time=0, heuristic_score=0, search_score=0, states_explored=0, depth_stats=None):
+        """
+        Logs the move information to the game trace file with AI-related statistics.
+        
+        Args:
+            - game_state: dict | The current game state
+            - move: tuple | The move as dictionary coordinates
+            - ai_time: float | Time taken by AI to make this move (only for AI)
+            - heuristic_score: int | Heuristic evaluation of the board (only for AI)
+            - search_score: int | Minimax/Alpha-Beta heuristic score (only for AI)
+            - states_explored: int | Cumulative number of states explored (only for AI)
+            - depth_stats: dict | Dictionary with number of states explored at each depth (only for AI)
+        """
+        # Dynamically generate the file name
+        timeout = 5  # Timeout in seconds (can be parameterized)
+        max_turns = 100  # Max number of turns (can be parameterized)
+        file_name = f"gameTrace-{self.algorithm}-{timeout}-{max_turns}.txt"
+
+        # Open the file in append mode
+        with open(file_name, "a") as file:
+            # Log the move details
+            board_move = self.unparse_input(move)
+            start, end = board_move[0], board_move[1]
+
             file.write("\nPlayer = " + game_state["turn"] + "\n")
             file.write("Turn #" + str(self.turn_counter) + "\n")
             file.write("Move from " + start + " to " + end + "\n")
+
+            # If AI played this move, log additional details
+            if game_state["turn"] == "white":  # Assuming white is AI
+                file.write("Time for this action: {:.3f} sec\n".format(ai_time))
+                file.write("Heuristic score: {}\n".format(heuristic_score))
+                file.write("Alpha-Beta search score: {}\n".format(search_score))
+                file.write("Cumulative states explored: {}\n".format(states_explored))
+
+                # Log per-depth statistics
+                if depth_stats:
+                    file.write("Cumulative states explored by depth: {}\n".format(
+                        ' '.join(["{}={}".format(d, depth_stats[d]) for d in sorted(depth_stats.keys())])
+                    ))
+                    total_states = sum(depth_stats.values())
+                    file.write("Cumulative % states explored by depth: {}\n".format(
+                        ' '.join(["{}={:.1f}%".format(d, (depth_stats[d] / total_states) * 100) for d in sorted(depth_stats.keys())])
+                    ))
+
+                    # Calculate and log average branching factor
+                    total_nodes = sum(depth_stats.values()) - depth_stats.get(0, 0)
+                    total_branches = sum([d * depth_stats[d] for d in depth_stats if d > 0])
+                    avg_branching_factor = total_branches / total_nodes if total_nodes > 0 else 0
+                    file.write("Average branching factor: {:.2f}\n".format(avg_branching_factor))
+
+            # Log the new board configuration
             file.write("New configuration:\n")
             for i, row in enumerate(self.current_game_state["board"], start=1):
                 file.write(str(6 - i) + "  " + ' '.join(piece.rjust(3) for piece in row))
                 file.write("\n")
-        return
-    
-    """
-    Modify the board to make a move
 
-    Args: 
-        - game_state:   dictionary | Dictionary representing the current game state
-        - move          tuple | the move to perform ((start_row, start_col),(end_row, end_col))
-    Returns:
-        - game_state:   dictionary | Dictionary representing the modified game state
-    """
+            file.write("\n")  # Blank line for readability
+            
     def make_move(self, game_state, move):
         start = move[0]
         end = move[1]
@@ -309,14 +345,14 @@ class MiniChess:
 
         return game_state
 
-    """
-    Parse the input string and modify it into board coordinates
+        """
+            Parse the input string and modify it into board coordinates
 
-    Args:
-        - move: string representing a move "B2 B3"
-    Returns:
-        - (start, end)  tuple | the move to perform ((start_row, start_col),(end_row, end_col))
-    """
+            Args:
+                - move: string representing a move "B2 B3"
+            Returns:
+                - (start, end)  tuple | the move to perform ((start_row, start_col),(end_row, end_col))
+        """
     def parse_input(self, move):
         try:
             start, end = move.split() #Splits the move (B2 B3) into start=B2 and end=B3
@@ -498,6 +534,19 @@ class MiniChess:
         piece_values = {"K": 999, "Q": 9, "B": 3, "N": 3, "p": 1}
         MoveList = self.valid_moves(game_state)
         board_heuristic = self.evaluate_board(game_state)
+
+        #initialize tracking variables for stats
+        if not hasattr(self, "total_states_explored"):
+            self.total_states_explored = 0  
+            self.depth_exploration_stats = {}
+        #update the total number of states explored
+        self.total_states_explored += 1
+
+        #update the depth exploration stats
+        if current_depth not in self.depth_exploration_stats:
+            self.depth_exploration_stats[current_depth] = 0
+        self.depth_exploration_stats[current_depth] += 1
+
         if not MoveList:  # No valid moves, return heuristic as is (Case if parent is win/loss condition)
             return (None, board_heuristic)
 
@@ -613,9 +662,28 @@ class MiniChess:
             return (best_move, best_value)
 
     def AI_makeMove(self, game_state):
+        start_time = time.time() 
+
         if self.algorithm: results = self.alpha_beta(game_state,1,-15000,15000) #UNCOMMENT WHEN MINIMAX IS IMPLEMENTED
         else: results = self.minimax(game_state,1)                            #UNCOMMENT WHEN MINIMAX IS IMPLEMENTED
-        return results[0]
+        
+        end_time = time.time()
+        ai_time_taken = end_time - start_time
+
+        # track AI statistics
+        states_explored = self.total_states_explored
+        depth_stats = self.depth_exploration_stats
+        # apply the move
+        best_move, search_score = results
+        self.make_move(game_state, best_move)
+
+        self.log_move(
+            game_state, best_move, ai_time_taken,
+            self.evaluate_board(game_state), search_score,
+            states_explored, depth_stats
+        )
+
+        return best_move
 
 
     """
@@ -658,6 +726,9 @@ class MiniChess:
 
             #Making the move
             self.make_move(self.current_game_state, move)
+
+            #logging human move, no AI details here
+            self.log_move(self.current_game_state, move)
 
             #Printing the move information and the new board configuration
             printable_move = self.unparse_input(move) #unparsing the move to convert it to chess terminology
