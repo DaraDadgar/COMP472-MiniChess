@@ -12,9 +12,9 @@ class MiniChess:
         self.current_game_state = self.init_board()
         self.turn_counter = 1 #Variable to keep track of the current turn
         self.turn_with_piece_taken = 1 #Variable to keep track of the last turn a piece was taken.
-        self.algorithm = False # True = alpha-beta | False = minimax
+        self.algorithm = None # True = alpha-beta | False = minimax
         self.heuristic = 0 # controls which heuristic to use
-        self.depth = 3 #TODO: How deep is your love (CHANGE BEFORE SUBMISSION) | this the depth of how far we checkin lols
+        self.depth = 3 #this the depth of how far we are exploring in the game tree 
         self.invalid_move_counter = 0 #variable used to end the game if a human enters two invalid moves
         with open("gameTrace-false-5-10.txt", "w") as file:
             file.write("NEW GAME START!\n\nGAME PARAMETERS:\n")
@@ -664,6 +664,7 @@ class MiniChess:
 
     """
     Return the best move to be performed by the AI after running either minimax or alpha-beta algorithms.
+    It runs the AI algorithm starting from 
 
     Args:
         - game_state: dictionary | Dictionary representing the current game state
@@ -671,20 +672,24 @@ class MiniChess:
         - best_move: the best move to be performed by the AI from the current board state after developing the full game tree
         - eval_time: the time taken to find the best move using the algorithm chosen
     """
-    def AI_makeMove(self, game_state):
+    def AI_makeMove(self, game_state, turn):
+        #Determine the starting depth based on the AI's turn
+        start_depth = 1 if turn == "white" else 2
+        
         if self.algorithm: 
             start = time.time() #starting a timer before the algorithm method is called
-            results = self.alpha_beta(game_state,1,-15000,15000)
+            results = self.alpha_beta(game_state,start_depth,-15000,15000)
             end = time.time() #ending the timer once the algorithm finishes execution
-        else: 
+        else:
             start = time.time()
-            results = self.minimax(game_state,1) 
-            end = time.time()  
+            results = self.minimax(game_state,start_depth) 
+            end = time.time()
+        
         #Computing the evalutation time to find the best move
         eval_time = round(end - start, 7)
         #Storing the best move found by the algorithm chosen
         best_move = results[0]    
-        
+
         #returns the best move found using either alpha-beta or minimax algorithm and the time taken to find that move
         result_info = best_move, eval_time
         return result_info
@@ -707,13 +712,53 @@ class MiniChess:
         while(1): 
             #Launching the appropriate game based on the user's selection
             if game_mode == "1":
-                self.h_vs_h()
+                max_turns = input("Enter the maximum number of turns before the end of the game: ")
+                self.h_vs_h(max_turns)
             elif game_mode == "2":
-                self.ai_vs_h()
+                timeout = input("Enter the maximum time (in seconds) allocated for the AI to make a move: ")
+                max_turns = input("Enter the maximum number of turns before the end of the game: ")
+                algorithm = input("Enter the algorithm you want to use for the AI(m for minimax and a for alpha-beta): ")
+                while(1):
+                    if (algorithm == "m"):
+                        self.algorithm = False
+                        self.ai_vs_h(timeout, max_turns)
+                    elif (algorithm == "a"):
+                        self.algorithm = True
+                        self.ai_vs_h(timeout, max_turns)
+                    else:
+                        algorithm = input("Incorrect input! Please try again: ")   
+                        continue 
+                exit(1)
             elif game_mode == "3":
-                self.h_vs_ai()
+                timeout = input("Enter the maximum time (in seconds) allocated for the AI to make a move: ")
+                max_turns = input("Enter the maximum number of turns before the end of the game: ")
+                algorithm = input("Enter the algorithm you want to use for the AI(m for minimax and a for alpha-beta): ")
+                while(1):
+                    if (algorithm == "m"):
+                        self.algorithm = False
+                        self.h_vs_ai(timeout, max_turns)
+                    elif (algorithm == "a"):
+                        self.algorithm = True
+                        self.h_vs_ai(timeout, max_turns)
+                    else:
+                        algorithm = input("Incorrect input! Please try again: ")   
+                        continue 
+                exit(1)
             elif game_mode == "4":
-                self.ai_vs_ai()
+                timeout = input("Enter the maximum time (in seconds) allocated for the AI to make a move: ")
+                max_turns = input("Enter the maximum number of turns before the end of the game: ")
+                algorithm = input("Enter the algorithm you want to use for the AI(m for minimax and a for alpha-beta): ")
+                while(1):
+                    if (algorithm == "m"):
+                        self.algorithm = False
+                        self.ai_vs_ai(timeout, max_turns)
+                    elif (algorithm == "a"):
+                        self.algorithm = True
+                        self.ai_vs_ai(timeout, max_turns)
+                    else:
+                        algorithm = input("Incorrect input! Please try again: ")   
+                        continue 
+                exit(1)
             else:
                 game_mode = input("Invalid Input! Please try again: ")
         exit(1)
@@ -722,17 +767,17 @@ class MiniChess:
     Human vs Human game mode
     
     Args:
-        - None
+        - max_turns: a string indicating the maximum number of turns before the game ends
     Returns:
         - None
     """
-    def h_vs_h(self):
+    def h_vs_h(self, max_turns):
         #Printing the initial game information and initial board configuration
         print()
         print("-------------------------------------------------------------------")
         print("Welcome to Mini Chess! Enter moves as 'B2 B3'. Type 'exit' to quit.")
         print("NEW GAME START!\n\nGAME PARAMETERS:\n")
-        print("Timeout = 5\nMax Number of Turns = 100\nPlay Mode = H-H")
+        print("Timeout = 5\nMax Number of Turns = " + max_turns + "\nPlay Mode = H-H")
         print("\n\nInitial configuration:\n")
         self.display_board(self.current_game_state)
         while True:
@@ -740,7 +785,7 @@ class MiniChess:
             if self.check_draw():
                 print("Players draw... ending game")
                 exit(1)
-            if self.turn_counter>200:
+            if self.turn_counter>int(max_turns):
                 with open("gameTrace-false-5-10.txt", "a") as file:
                     file.write("\nTurn limit reached at " + str(self.turn_counter - 1) + " turns")
                 print("Max turn reached... ending game")
@@ -801,17 +846,21 @@ class MiniChess:
     AI vs Human game mode
     
     Args:
-        - None
+        - timeout: string indicating the maximum time allowed for the AI to return the best move
+        - max_turns: a string indicating the maximum number of turns before the game ends
     Returns:
         - None
     """
-    def ai_vs_h(self):
+    def ai_vs_h(self, timeout, max_turns):
+        #Checking the algorithm chosen by the user
+        if self.algorithm: alg = "Alpha-Beta" 
+        else: alg = "Minimax"
         #Printing the initial game information and initial board configuration
         print()
         print("-------------------------------------------------------------------")
         print("Welcome to Mini Chess! Enter moves as 'B2 B3'. Type 'exit' to quit.")
         print("NEW GAME START!\n\nGAME PARAMETERS:\n")
-        print("Timeout = 5\nMax Number of Turns = 100\nPlay Mode = AI-H")
+        print("Timeout = " + timeout + " s\nMax Number of Turns = " + max_turns + "\nPlay Mode = AI-H\nAI Algorithm = " + alg)
         print("\n\nInitial configuration:\n")
         self.display_board(self.current_game_state)
         while True:
@@ -819,14 +868,15 @@ class MiniChess:
             if self.check_draw():
                 print("Players draw... ending game")
                 exit(1)
-            if self.turn_counter>200:
+            if self.turn_counter>int(max_turns):
                 with open("gameTrace-false-5-10.txt", "a") as file:
                     file.write("\nTurn limit reached at " + str(self.turn_counter - 1) + " turns")
                 print("Max turn reached... ending game")
                 exit(1)
             print(f"{self.current_game_state['turn'].capitalize()} to move: ")
             if self.current_game_state['turn'] == "white":
-                move_info = self.AI_makeMove(self.current_game_state)
+                turn = "white"
+                move_info = self.AI_makeMove(self.current_game_state, turn)
                 #Unloading the first element of the tuple (best_move) into a move variable
                 move = move_info[0]
                 #Make the AI lose if the best move found is not the current list of valid moves
@@ -835,6 +885,10 @@ class MiniChess:
                     exit(1)
                 print(self.unparse_input(move))
                 print("Time taken to find the move: " + str(move_info[1]) + " seconds")
+                #Ending the game if the AI takes longer than the timeout value to find the best move
+                if move_info[1] > float(timeout):
+                    print("Timeout value reached! Black wins!")
+                    exit(1)
             else:
                 move = input()
                 if move.lower() == 'exit':
@@ -874,17 +928,21 @@ class MiniChess:
     Human vs AI game mode
     
     Args:
-        - None
+        - timeout: string indicating the maximum time allowed for the AI to return the best move
+        - max_turns: a string indicating the maximum number of turns before the game ends
     Returns:
         - None
     """
-    def h_vs_ai(self):
+    def h_vs_ai(self, timeout, max_turns):
+        #Checking the algorithm chosen by the user
+        if self.algorithm: alg = "Alpha-Beta" 
+        else: alg = "Minimax"
         #Printing the initial game information and initial board configuration
         print()
         print("-------------------------------------------------------------------")
         print("Welcome to Mini Chess! Enter moves as 'B2 B3'. Type 'exit' to quit.")
         print("NEW GAME START!\n\nGAME PARAMETERS:\n")
-        print("Timeout = 5\nMax Number of Turns = 100\nPlay Mode = AI-H")
+        print("Timeout = " + timeout + " s\nMax Number of Turns = " + max_turns + "\nPlay Mode = H-AI\nAI Algorithm = " + alg)
         print("\n\nInitial configuration:\n")
         self.display_board(self.current_game_state)
         while True:
@@ -892,15 +950,27 @@ class MiniChess:
             if self.check_draw():
                 print("Players draw... ending game")
                 exit(1)
-            if self.turn_counter>200:
+            if self.turn_counter>int(max_turns):
                 with open("gameTrace-false-5-10.txt", "a") as file:
                     file.write("\nTurn limit reached at " + str(self.turn_counter - 1) + " turns")
                 print("Max turn reached... ending game")
                 exit(1)
             print(f"{self.current_game_state['turn'].capitalize()} to move: ")
-            if self.current_game_state['turn'] == "white":
-                move = self.AI_makeMove(self.current_game_state)
+            if self.current_game_state['turn'] == "black":
+                turn = "black"
+                move_info = self.AI_makeMove(self.current_game_state, turn)
+                #Unloading the first element of the tuple (best_move) into a move variable
+                move = move_info[0]
+                #Make the AI lose if the best move found is not the current list of valid moves
+                if not self.is_valid_move(self.current_game_state, move):
+                    print("Invalid move entered by the AI! The Human wins.")
+                    exit(1)
                 print(self.unparse_input(move))
+                print("Time taken to find the move: " + str(move_info[1]) + " seconds")
+                #Ending the game if the AI takes longer than the timeout value to find the best move
+                if move_info[1] > float(timeout):
+                    print("Timeout value reached! White wins!")
+                    exit(1)
             else:
                 move = input()
                 if move.lower() == 'exit':
@@ -910,7 +980,6 @@ class MiniChess:
                 if not move or not self.is_valid_move(self.current_game_state, move):
                     print("Invalid move. Try again.")
                     continue
-
 
             #Auto checking if it's a valid move from previous statement
             win_condition = self.check_win(self.current_game_state, move)
@@ -942,17 +1011,21 @@ class MiniChess:
     AI vs AI game mode
     
     Args:
-        - None
+        - timeout: string indicating the maximum time allowed for the AI to return the best move
+        - max_turns: a string indicating the maximum number of turns before the game ends
     Returns:
         - None
     """
-    def ai_vs_ai(self):
+    def ai_vs_ai(self, timeout, max_turns):
+        #Checking the algorithm chosen by the user
+        if self.algorithm: alg = "Alpha-Beta" 
+        else: alg = "Minimax"
         #Printing the initial game information and initial board configuration
         print()
         print("-------------------------------------------------------------------")
         print("Welcome to Mini Chess! Enter moves as 'B2 B3'. Type 'exit' to quit.")
         print("NEW GAME START!\n\nGAME PARAMETERS:\n")
-        print("Timeout = 5\nMax Number of Turns = 100\nPlay Mode = AI-H")
+        print("Timeout = " + timeout + " s\nMax Number of Turns = " + max_turns + "\nPlay Mode = AI-AI\nAI Algorithm = " + alg)
         print("\n\nInitial configuration:\n")
         self.display_board(self.current_game_state)
         while True:
@@ -960,24 +1033,42 @@ class MiniChess:
             if self.check_draw():
                 print("Players draw... ending game")
                 exit(1)
-            if self.turn_counter>200:
+            if self.turn_counter>int(max_turns):
                 with open("gameTrace-false-5-10.txt", "a") as file:
                     file.write("\nTurn limit reached at " + str(self.turn_counter - 1) + " turns")
                 print("Max turn reached... ending game")
                 exit(1)
             print(f"{self.current_game_state['turn'].capitalize()} to move: ")
             if self.current_game_state['turn'] == "white":
-                move = self.AI_makeMove(self.current_game_state)
-                print(self.unparse_input(move))
-            else:
-                move = input()
-                if move.lower() == 'exit':
-                    print("Game exited.")
+                turn = "white"
+                move_info = self.AI_makeMove(self.current_game_state, turn)
+                #Unloading the first element of the tuple (best_move) into a move variable
+                move = move_info[0]
+                #Make the AI lose if the best move found is not the current list of valid moves
+                if not self.is_valid_move(self.current_game_state, move):
+                    print("Invalid move entered by the AI! The Human wins.")
                     exit(1)
-                move = self.parse_input(move)
-                if not move or not self.is_valid_move(self.current_game_state, move):
-                    print("Invalid move. Try again.")
-                    continue
+                print(self.unparse_input(move))
+                print("Time taken to find the move: " + str(move_info[1]) + " seconds")
+                #Ending the game if the AI takes longer than the timeout value to find the best move
+                if move_info[1] > float(timeout):
+                    print("Timeout value reached! Black wins!")
+                    exit(1)
+            else:
+                turn = "black"
+                move_info = self.AI_makeMove(self.current_game_state, turn)
+                #Unloading the first element of the tuple (best_move) into a move variable
+                move = move_info[0]
+                #Make the AI lose if the best move found is not the current list of valid moves
+                if not self.is_valid_move(self.current_game_state, move):
+                    print("Invalid move entered by the AI! The Human wins.")
+                    exit(1)
+                print(self.unparse_input(move))
+                print("Time taken to find the move: " + str(move_info[1]) + " seconds")
+                #Ending the game if the AI takes longer than the timeout value to find the best move
+                if move_info[1] > float(timeout):
+                    print("Timeout value reached! White wins!")
+                    exit(1)
 
 
             #Auto checking if it's a valid move from previous statement
