@@ -800,14 +800,16 @@ class MiniChess:
             elif game_mode == "4":
                 timeout = input("Enter the maximum time (in seconds) allocated for the AI to make a move: ")
                 max_turns = input("Enter the maximum number of turns before the end of the game: ")
+                heuristic_white_AI = input("Enter the heuristic you'd like white AI to use (0,1,2): ")
+                heuristic_black_AI = input("Enter the heuristic you'd like black AI to use (0,1,2): ")
                 algorithm = input("Enter the algorithm you want to use for the AI(m for minimax and a for alpha-beta): ")
-                while(1):
-                    if (algorithm == "m"):
+                while True:
+                    if algorithm == "m":
                         self.algorithm = False
-                        self.ai_vs_ai(timeout, max_turns)
-                    elif (algorithm == "a"):
+                        self.ai_vs_ai(timeout, max_turns, heuristic_white_AI, heuristic_black_AI)
+                    elif algorithm == "a":
                         self.algorithm = True
-                        self.ai_vs_ai(timeout, max_turns)
+                        self.ai_vs_ai(timeout, max_turns, heuristic_white_AI, heuristic_black_AI)
                     else:
                         algorithm = input("Incorrect input! Please try again: ")   
                         continue 
@@ -1069,7 +1071,7 @@ class MiniChess:
     Returns:
         - None
     """
-    def ai_vs_ai(self, timeout, max_turns):
+    def ai_vs_ai(self, timeout, max_turns, white_heuristic, black_heuristic):
         #Checking the algorithm chosen by the user
         if self.algorithm: alg = "Alpha-Beta" 
         else: alg = "Minimax"
@@ -1094,12 +1096,13 @@ class MiniChess:
             print(f"{self.current_game_state['turn'].capitalize()} to move: ")
             if self.current_game_state['turn'] == "white":
                 turn = "white"
+                self.heuristic = white_heuristic
                 move_info = self.AI_makeMove(self.current_game_state, turn)
                 #Unloading the first element of the tuple (best_move) into a move variable
                 move = move_info[0]
                 #Make the AI lose if the best move found is not the current list of valid moves
                 if not self.is_valid_move(self.current_game_state, move):
-                    print("Invalid move entered by the AI! The Human wins.")
+                    print("Invalid move entered by the AI! Black wins.")
                     exit(1)
                 print(self.unparse_input(move))
                 print("Time taken to find the move: " + str(move_info[1]) + " seconds")
@@ -1109,12 +1112,13 @@ class MiniChess:
                     exit(1)
             else:
                 turn = "black"
+                self.heuristic = black_heuristic
                 move_info = self.AI_makeMove(self.current_game_state, turn)
                 #Unloading the first element of the tuple (best_move) into a move variable
                 move = move_info[0]
                 #Make the AI lose if the best move found is not the current list of valid moves
                 if not self.is_valid_move(self.current_game_state, move):
-                    print("Invalid move entered by the AI! The Human wins.")
+                    print("Invalid move entered by the AI! White wins.")
                     exit(1)
                 print(self.unparse_input(move))
                 print("Time taken to find the move: " + str(move_info[1]) + " seconds")
