@@ -15,7 +15,7 @@ class MiniChess:
         self.turn_with_piece_taken = 1 #Variable to keep track of the last turn a piece was taken.
         self.algorithm = None # True = alpha-beta | False = minimax
         self.heuristic = 1 # controls which heuristic to use
-        self.depth = 3 #this the depth of how far we are exploring in the game tree
+        self.depth = 1 #this the depth of how far we are exploring in the game tree
         self.invalid_move_counter = 0 #variable used to end the game if a human enters two invalid moves
         with open("gameTrace-false-5-10.txt", "w") as file:
             file.write("NEW GAME START!\n\nGAME PARAMETERS:\n")
@@ -507,7 +507,7 @@ class MiniChess:
                 game_state["turn"] = "black"
                 
             score += (num_white_moves - num_black_moves)
-            print("New score: " + str(score))
+            # print("New score: " + str(score))
 
             if whiteKing == False or blackKing == False: return True,score
             return False,score
@@ -806,10 +806,10 @@ class MiniChess:
                 while True:
                     if algorithm == "m":
                         self.algorithm = False
-                        self.ai_vs_ai(timeout, max_turns, heuristic_white_AI, heuristic_black_AI)
+                        self.ai_vs_ai(timeout, max_turns, int(heuristic_white_AI), int(heuristic_black_AI))
                     elif algorithm == "a":
                         self.algorithm = True
-                        self.ai_vs_ai(timeout, max_turns, heuristic_white_AI, heuristic_black_AI)
+                        self.ai_vs_ai(timeout, max_turns, int(heuristic_white_AI), int(heuristic_black_AI))
                     else:
                         algorithm = input("Incorrect input! Please try again: ")   
                         continue 
