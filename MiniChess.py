@@ -14,7 +14,7 @@ class MiniChess:
         self.turn_counter = 1 #Variable to keep track of the current turn
         self.turn_with_piece_taken = 1 #Variable to keep track of the last turn a piece was taken.
         self.algorithm = None # True = alpha-beta | False = minimax
-        self.heuristic = 0 # controls which heuristic to use
+        self.heuristic = 1 # controls which heuristic to use
         self.depth = 3 #this the depth of how far we are exploring in the game tree
         self.invalid_move_counter = 0 #variable used to end the game if a human enters two invalid moves
         with open("gameTrace-false-5-10.txt", "w") as file:
@@ -494,15 +494,17 @@ class MiniChess:
                     if square == "bK":
                         blackKing = True
 
-            #Adjusting the score value based on the total number of valid_moves for the current game_state
-            if (game_state["turn"] == "white"):
-                num_white_moves = len(self.valid_moves(game_state)) * 0.1
-            else:
-                game_state["turn"] = "black"
-                num_black_moves = len(self.valid_moves(game_state)) * 0.1
-                game_state["turn"] = "white"
+            # #Adjusting the score value based on the total number of valid_moves for the current game_state
+            # if (game_state["turn"] == "white"):
+            #     num_white_moves = len(self.valid_moves(game_state)) * 0.1
+            # else:
+            #     game_state["turn"] = "black"
+            #     num_black_moves = len(self.valid_moves(game_state)) * 0.1
+            #     game_state["turn"] = "white"
                 
-            score += num_white_moves - num_black_moves
+            # score += num_white_moves - num_black_moves
+
+            
 
             if whiteKing == False or blackKing == False: return True,score
             return False,score
