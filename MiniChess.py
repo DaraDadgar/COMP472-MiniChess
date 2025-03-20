@@ -263,18 +263,7 @@ class MiniChess:
         - move: tuple | the move as dictionary coordinates
     """
     def log_move(self, game_state, move, ai_time=0, heuristic_score=0, search_score=0, states_explored=0, depth_stats=None):
-        """
-        Logs the move information to the game trace file with AI-related statistics.
-        
-        Args:
-            - game_state: dict | The current game state
-            - move: tuple | The move as dictionary coordinates
-            - ai_time: float | Time taken by AI to make this move (only for AI)
-            - heuristic_score: int | Heuristic evaluation of the board (only for AI)
-            - search_score: int | Minimax/Alpha-Beta heuristic score (only for AI)
-            - states_explored: int | Cumulative number of states explored (only for AI)
-            - depth_stats: dict | Dictionary with number of states explored at each depth (only for AI)
-        """
+
         # Dynamically generate the file name
         timeout = 5  # Timeout in seconds (can be parameterized)
         max_turns = 100  # Max number of turns (can be parameterized)
@@ -295,16 +284,15 @@ class MiniChess:
                 file.write("Time for this action: {:.3f} sec\n".format(ai_time))
                 file.write("Heuristic score: {}\n".format(heuristic_score))
                 file.write("Alpha-Beta search score: {}\n".format(search_score))
+                file.write("Minimax search score: {}\n".format(search_score))
                 file.write("Cumulative states explored: {}\n".format(states_explored))
 
                 # Log per-depth statistics
                 if depth_stats:
-                    file.write("Cumulative states explored by depth: {}\n".format(
-                        ' '.join(["{}={}".format(d, depth_stats[d]) for d in sorted(depth_stats.keys())])
+                    file.write("Cumulative states explored by depth: {}\n".format(' '.join(["{}={}".format(d, depth_stats[d]) for d in sorted(depth_stats.keys())])
                     ))
                     total_states = sum(depth_stats.values())
-                    file.write("Cumulative % states explored by depth: {}\n".format(
-                        ' '.join(["{}={:.1f}%".format(d, (depth_stats[d] / total_states) * 100) for d in sorted(depth_stats.keys())])
+                    file.write("Cumulative % states explored by depth: {}\n".format(' '.join(["{}={:.1f}%".format(d, (depth_stats[d] / total_states) * 100) for d in sorted(depth_stats.keys())])
                     ))
 
                     # Calculate and log average branching factor
@@ -331,7 +319,7 @@ class MiniChess:
         piece = game_state["board"][start_row][start_col]
         game_state["board"][start_row][start_col] = '.'
         game_state["board"][end_row][end_col] = piece
-        self.log_move(game_state,move)
+        # self.log_move(game_state,move) #Logging the move of the player
         if piece == "wp" and end_row == 0:
             game_state["board"][end_row][end_col] = "wQ"
         if piece == "bp" and end_row == 4:
@@ -612,11 +600,24 @@ class MiniChess:
         return current_best_move, current_best_heuristic
 
     def minimax(self, game_state, current_depth):
-        # Get the list of valid moves and evaluate the current board.
+        # Initialize tracking variables for stats
+        if not hasattr(self, "total_states_explored"):
+            self.total_states_explored = 0
+            self.depth_exploration_stats = {}
+
+        # Update the total number of states explored
+        self.total_states_explored += 1
+
+        # Update the depth exploration stats
+        if current_depth not in self.depth_exploration_stats:
+            self.depth_exploration_stats[current_depth] = 0
+        self.depth_exploration_stats[current_depth] += 1
+
+        # Get the list of valid moves and evaluate the current board
         MoveList = self.valid_moves(game_state)
         current_board_value = self.evaluate_board(game_state)
 
-        # Terminal condition: No moves available or reached maximum depth.
+        # Terminal condition: No moves available or reached maximum depth
         if not MoveList:
             return (None, current_board_value)
         if current_depth == self.depth:
@@ -627,19 +628,19 @@ class MiniChess:
             best_value = -math.inf
             best_move = None
             for move in MoveList:
-                # Convert move to internal format.
+                # Convert move to internal format
                 move = self.parse_input_v2(move)
 
-                # Simulate the move (modifies game_state in place).
+                # Simulate the move (modifies game_state in place)
                 storedPiece, game_state = self.simulate_make_move(game_state, move)
 
-                # Recursively evaluate the resulting board state.
+                # Recursively evaluate the resulting board state
                 _, child_value = self.minimax(game_state, current_depth + 1)
 
-                # Undo the move to restore the original state.
+                # Undo the move to restore the original state
                 self.simulate_unmake_move(game_state, move, storedPiece)
 
-                # Update if this move is better than previously seen moves.
+                # Update if this move is better than previously seen moves
                 if child_value > best_value:
                     best_value = child_value
                     best_move = move
@@ -654,34 +655,32 @@ class MiniChess:
                 _, child_value = self.minimax(game_state, current_depth + 1)
                 self.simulate_unmake_move(game_state, move, storedPiece)
 
-                # Update if this move is lower than previously seen moves.
+                # Update if this move is lower than previously seen moves
                 if child_value < best_value:
                     best_value = child_value
                     best_move = move
 
             return (best_move, best_value)
-
+        
     def AI_makeMove(self, game_state):
-        start_time = time.perf_counter() 
+        # start_time = time.perf_counter() 
         if self.algorithm: results = self.alpha_beta(game_state,1,-15000,15000) #UNCOMMENT WHEN MINIMAX IS IMPLEMENTED
         else: results = self.minimax(game_state,1)                            #UNCOMMENT WHEN MINIMAX IS IMPLEMENTED
-        end_time = time.perf_counter()
-        ai_time_taken = end_time - start_time
+        # end_time = time.perf_counter()
+        # ai_time_taken = end_time - start_time
 
-        # track AI statistics
-        states_explored = self.total_states_explored
-        depth_stats = self.depth_exploration_stats
         # apply the move
         best_move, search_score = results
         # self.make_move(game_state, best_move)
-        heuristic_score = self.evaluate_board(game_state)
-        self.log_move(game_state, best_move, ai_time_taken, heuristic_score, search_score=0, states_explored=0, depth_stats=None)
+        heuristic_score = self.evaluate_board(self.current_game_state)
+        print("This is the Heuristic Score ----------------", heuristic_score)
+        print("This is the Search Score ----------------", search_score)
+        # self.log_move(game_state, best_move, heuristic_score, search_score, states_explored, depth_stats)
         #     game_state, best_move, ai_time_taken,
         #     self.evaluate_board(game_state), search_score,
         #     states_explored, depth_stats
         # )
-        
-        return results[0]
+        return best_move, search_score
 
 
     """
@@ -724,9 +723,10 @@ class MiniChess:
 
             #Making the move
             self.make_move(self.current_game_state, move)
-
             #logging human move, no AI details here
+            #if() #if human move then log move
             self.log_move(self.current_game_state, move)
+    
 
             #Printing the move information and the new board configuration
             printable_move = self.unparse_input(move) #unparsing the move to convert it to chess terminology
@@ -766,8 +766,15 @@ class MiniChess:
                 exit(1)
             print(f"{self.current_game_state['turn'].capitalize()} to move: ")
             if self.current_game_state['turn'] == "white":
-                move = self.AI_makeMove(self.current_game_state)
-                
+                start_time = time.perf_counter()
+                move, search_score = self.AI_makeMove(self.current_game_state)
+                end_time = time.perf_counter()
+                ai_time_taken = end_time - start_time
+                heuristic_score = self.evaluate_board(self.current_game_state)
+                states_explored = self.total_states_explored  
+                depth_stats = self.depth_exploration_stats 
+                self.log_move(self.current_game_state, move, ai_time_taken, heuristic_score, search_score, states_explored, depth_stats)
+                ##here
                 print(self.unparse_input(move))
             else:
                 move = input()

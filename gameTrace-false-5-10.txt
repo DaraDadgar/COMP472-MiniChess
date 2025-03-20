@@ -1,0 +1,13 @@
+NEW GAME START!
+
+GAME PARAMETERS:
+Timeout = 5
+Max Number of Turns = 100
+Play Mode = H-H
+
+Initial configuration:
+5   bK  bQ  bB  bN   .
+4    .   .  bp  bp   .
+3    .   .   .   .   .
+2    .  wp  wp   .   .
+1    .  wN  wB  wQ  wK
