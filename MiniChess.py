@@ -447,7 +447,7 @@ class MiniChess:
             return False
 
     """
-    Evaluates a board state and updates the heuristic score based on the heuristic chosen
+    Evaluates a board state and updates the heuristic score based on the heuristic chosen (3 heuristics available)
     NOTE: White player tries to maximies and Black player tries to minimize in all heuristics
 
     Args:
@@ -456,7 +456,8 @@ class MiniChess:
         - score: integer value representing the heuristic score of the board state passed as a parameter to the function
     """
     def evaluate_board(self, game_state):
-        #if self.heuristic == 0:     #UNCOMMENT TO ADD OTHER HEURISTICS
+        #Heuristic 0
+        if self.heuristic == 0:     #UNCOMMENT TO ADD OTHER HEURISTICS
             piece_values = {"K": 999, "Q": 9, "B": 3, "N": 3, "p": 1}
             score = 0
             blackKing = False
@@ -475,10 +476,39 @@ class MiniChess:
 
             if whiteKing == False or blackKing == False: return True,score
             return False,score
-        #elif self.heuristic == 1:   #UNCOMMENT TO ADD OTHER HEURISTICS
-            #HEURISTIC 1             #UNCOMMENT TO ADD OTHER HEURISTICS
-        #else                        #UNCOMMENT TO ADD OTHER HEURISTICS
-            #HEURISTIC 2
+        #Heuristic 1
+        elif self.heuristic == 1:   #UNCOMMENT TO ADD OTHER HEURISTICS
+            piece_values = {"K": 999, "Q": 9, "B": 3, "N": 3, "p": 1}
+            score = 0
+            blackKing = False
+            whiteKing = False
+            #Assigning values to each piece on the board based on the heuristic function defined
+            for row in game_state["board"]:
+                for square in row:
+                    if square != ".":
+                        value = piece_values[square[1]]
+                        #Increase the value of score if it is a white piece, otherwise decrease
+                        score += value if square[0] == "w" else -value
+                    if square == "wK":
+                        whiteKing = True
+                    if square == "bK":
+                        blackKing = True
+
+            #Adjusting the score value based on the total number of valid_moves for the current game_state
+            if (game_state["turn"] == "white"):
+                num_white_moves = len(self.valid_moves(game_state)) * 0.1
+            else:
+                game_state["turn"] = "black"
+                num_black_moves = len(self.valid_moves(game_state)) * 0.1
+                game_state["turn"] = "white"
+                
+            score += num_white_moves - num_black_moves
+
+            if whiteKing == False or blackKing == False: return True,score
+            return False,score
+        #Heuristic 2
+        else:      
+            return
 
     """
     Simulates a move on the board. Used by the minimax and alpha-beta algorithms to find the heuristic value of a new board state.
