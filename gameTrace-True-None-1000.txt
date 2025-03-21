@@ -1,0 +1,24 @@
+
+Player = black
+Turn #1
+Move from D1 to D4
+Human move (no AI stats).
+New configuration:
+5   bK  bQ  bB  bN   .
+4    .   .  bp  wQ   .
+3    .   .   .   .   .
+2    .  wp  wp   .   .
+1    .  wN  wB   .  wK
+
+
+Player = black
+Turn #2
+Move from D4 to D5
+Human move (no AI stats).
+New configuration:
+5   bK   .  bB  wQ   .
+4    .  bQ  bp   .   .
+3    .   .   .   .   .
+2    .  wp  wp   .   .
+1    .  wN  wB   .  wK
+

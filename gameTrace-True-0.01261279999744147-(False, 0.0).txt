@@ -1,9 +1,0 @@
-
-Player = white
-Turn #1
-Move from D1 to D4
-Time for this action: 1.700 sec
-Heuristic score: 1
-Alpha-Beta search score: {1: 1}
-Minimax search score: {1: 1}
-Cumulative states explored: 10

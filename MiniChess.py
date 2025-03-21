@@ -263,50 +263,55 @@ class MiniChess:
         - game_state: dict | the current game state dictionary
         - move: tuple | the move as dictionary coordinates
     """
-    def log_move(self, game_state, move, timeout, max_turns, ai_time=0, heuristic_score=0, search_score=0, states_explored=0, depth_stats=None):
+    def log_move(self, game_state, move, max_turns, timeout=None, ai_time=0, heuristic_score=0,
+                search_score=0, states_explored=0, depth_stats=None, player=None):
+        """Logs moves made by AI or Human based on game mode and player type."""
 
-        # Dynamically generate the file name
-        # timeout = 5  # Timeout in seconds (can be parameterized)
-        # max_turns = 100  # Max number of turns (can be parameterized)
         file_name = f"gameTrace-{self.algorithm}-{timeout}-{max_turns}.txt"
 
-        # Open the file in append mode
+
+
         with open(file_name, "a") as file:
-            # Log the move details
             board_move = self.unparse_input(move)
             start, end = board_move[0], board_move[1]
 
-            file.write("\nPlayer = " + game_state["turn"] + "\n")
-            file.write("Turn #" + str(self.turn_counter) + "\n")
-            file.write("Move from " + start + " to " + end + "\n")
+            file.write(f"\nPlayer = {player if player else game_state['turn']}\n")
+            file.write(f"Turn #{self.turn_counter}\n")
+            file.write(f"Move from {start} to {end}\n")
 
-            # If AI played this move, log additional details
-            if game_state["turn"] == "white":  # Assuming white is AI
-                file.write("Time for this action: {:.3f} sec\n".format(ai_time))
-                file.write("Heuristic score: {}\n".format(heuristic_score))
-                file.write("Alpha-Beta search score: {}\n".format(search_score))
-                file.write("Minimax search score: {}\n".format(search_score))
-                file.write("Cumulative states explored: {}\n".format(states_explored))
+            # If the player is an AI, log AI-specific information
+            if self.is_ai_player(game_state["turn"]):
+                file.write(f"Time for this action: {ai_time:.3f} sec\n")
+                file.write(f"Heuristic score: {heuristic_score}\n")
+                file.write(f"{'Alpha-Beta' if self.algorithm else 'Minimax'} search score: {search_score}\n")
+                file.write(f"Cumulative states explored: {states_explored}\n")
 
-                # Log per-depth statistics
-                if depth_stats:
-                    file.write("Cumulative states explored by depth: {}\n".format(' '.join(["{}={}".format(d, depth_stats[d]) for d in sorted(depth_stats.keys())])
-                    ))
+                if depth_stats and sum(depth_stats.values()) > 0:
                     total_states = sum(depth_stats.values())
-                    file.write("Cumulative % states explored by depth: {}\n".format(' '.join(["{}={:.1f}%".format(d, (depth_stats[d] / total_states) * 100) for d in sorted(depth_stats.keys())])
+
+                    file.write("Cumulative states explored by depth: {}\n".format(
+                        ' '.join(f"{d}={depth_stats[d]}" for d in sorted(depth_stats))
                     ))
 
-                    # Calculate and log average branching factor
-                    total_nodes = sum(depth_stats.values()) - depth_stats.get(0, 0)
-                    total_branches = sum([d * depth_stats[d] for d in depth_stats if d > 0])
-                    avg_branching_factor = total_branches / total_nodes if total_nodes > 0 else 0
-                    file.write("Average branching factor: {:.2f}\n".format(avg_branching_factor))
+                    file.write("Cumulative % states explored by depth: {}\n".format(
+                        ' '.join(f"{d}={depth_stats[d] / total_states:.1%}" for d in sorted(depth_stats))
+                    ))
 
-            # Log the new board configuration
+                    # Optional: average branching factor (if meaningful)
+                    total_nodes = sum(depth_stats.values()) - depth_stats.get(0, 0)
+                    total_branches = sum(d * depth_stats[d] for d in depth_stats if d > 0)
+                    avg_branching_factor = total_branches / total_nodes if total_nodes > 0 else 0
+                    file.write(f"Average branching factor: {avg_branching_factor:.2f}\n")
+
+            # it's a human move, log only basics
+            else:
+                file.write("Human move (no AI stats).\n")
+
+            # Always log updated board
             file.write("New configuration:\n")
             for i, row in enumerate(self.current_game_state["board"], start=1):
-                file.write(str(6 - i) + "  " + ' '.join(piece.rjust(3) for piece in row))
-                file.write("\n")
+                file.write(str(6 - i) + "  " + ' '.join(piece.rjust(3) for piece in row) + "\n")
+            file.write("\n")
 
             file.write("\n")  # Blank line for readability
 
@@ -616,8 +621,21 @@ class MiniChess:
         piece_values = {"K": 999, "Q": 9, "B": 3, "N": 3, "p": 1}
         MoveList = self.valid_moves(game_state)
         game_end,board_heuristic = self.evaluate_board(game_state)
+
         if game_end:  # No valid moves, return heuristic as is (Case if parent is win/loss condition)
             return (None, board_heuristic)
+
+        #initialize tracking variables for stats
+        if not hasattr(self, "total_states_explored"):
+            self.total_states_explored = 0
+            self.depth_exploration_stats = {}
+        #update the total number of states explored
+        self.total_states_explored += 1
+
+        #update the depth exploration stats
+        if current_depth not in self.depth_exploration_stats:
+            self.depth_exploration_stats[current_depth] = 0
+        self.depth_exploration_stats[current_depth] += 1
 
         if current_depth % 2 == 1:  # Max node (AI's turn)
             current_best_heuristic = alpha
@@ -700,11 +718,24 @@ class MiniChess:
         - best_value: the heuristic value of the best move to be taken 
     """
     def minimax(self, game_state, current_depth):
-        # Get the list of valid moves and evaluate the current board.
+        # Initialize tracking variables for stats
+        if not hasattr(self, "total_states_explored"):
+            self.total_states_explored = 0
+            self.depth_exploration_stats = {}
+
+        # Update the total number of states explored
+        self.total_states_explored += 1
+
+        # Update the depth exploration stats
+        if current_depth not in self.depth_exploration_stats:
+            self.depth_exploration_stats[current_depth] = 0
+        self.depth_exploration_stats[current_depth] += 1
+
+        # Get the list of valid moves and evaluate the current board
         MoveList = self.valid_moves(game_state)
         current_board_value = self.evaluate_board(game_state)
 
-        # Terminal condition: No moves available(win, loss or draw) or reached maximum depth.
+        # Terminal condition: No moves available(win, loss or draw) or reached maximum depth
         #TODO: make sure the valid_moves is empty after a draw, win or loss??
         if not MoveList:
             return (None, current_board_value)
@@ -716,19 +747,19 @@ class MiniChess:
             best_value = -math.inf
             best_move = None
             for move in MoveList:
-                # Convert move to internal format.
+                # Convert move to internal format
                 move = self.parse_input_v2(move)
 
-                # Simulate the move (modifies game_state in place).
+                # Simulate the move (modifies game_state in place)
                 original_piece, captured_piece, game_state = self.simulate_make_move(game_state, move)
 
-                # Recursively evaluate the resulting board state.
+                # Recursively evaluate the resulting board state
                 _, child_value = self.minimax(game_state, current_depth + 1)
 
-                # Undo the move to restore the original state.
+                # Undo the move to restore the original state
                 self.simulate_unmake_move(game_state, move, captured_piece, original_piece)
 
-                # Update if this move is better than previously seen moves.
+                # Update if this move is better than previously seen moves
                 if child_value > best_value:
                     best_value = child_value
                     best_move = move
@@ -743,7 +774,7 @@ class MiniChess:
                 _, child_value = self.minimax(game_state, current_depth + 1)
                 self.simulate_unmake_move(game_state, move, captured_piece, original_piece)
 
-                # Update if this move is lower than previously seen moves.
+                # Update if this move is lower than previously seen moves
                 if child_value < best_value:
                     best_value = child_value
                     best_move = move
@@ -788,7 +819,7 @@ class MiniChess:
         best_move = results[0]    
         heuristic_score = results[1]
         #returns the best move found using either alpha-beta or minimax algorithm and the time taken to find that move
-        result_info = best_move, eval_time
+        result_info = best_move, eval_time, heuristic_score
         return result_info
 
     """
@@ -809,39 +840,51 @@ class MiniChess:
         while(1): 
             #Launching the appropriate game based on the user's selection
             if game_mode == "1":
+                self.players = {"white": "Human", "black": "Human"}
                 max_turns = input("Enter the maximum number of turns before the end of the game: ")
                 self.h_vs_h(max_turns)
+
             elif game_mode == "2":
+                self.players = {"white": "AI", "black": "Human"}
                 timeout = input("Enter the maximum time (in seconds) allocated for the AI to make a move: ")
                 max_turns = input("Enter the maximum number of turns before the end of the game: ")
                 algorithm = input("Enter the algorithm you want to use for the AI(m for minimax and a for alpha-beta): ")
                 while(1):
                     if (algorithm == "m"):
                         self.algorithm = False
+                        self.log_filename = f"gameTrace-{algorithm}-{timeout}-{max_turns}.txt"
                         self.ai_vs_h(timeout, max_turns)
+
                     elif (algorithm == "a"):
                         self.algorithm = True
+                        self.log_filename = f"gameTrace-{algorithm}-{timeout}-{max_turns}.txt"
                         self.ai_vs_h(timeout, max_turns)
+
                     else:
                         algorithm = input("Incorrect input! Please try again: ")   
                         continue 
                 exit(1)
             elif game_mode == "3":
+                self.players = {"white": "Human", "black": "AI"}
                 timeout = input("Enter the maximum time (in seconds) allocated for the AI to make a move: ")
                 max_turns = input("Enter the maximum number of turns before the end of the game: ")
                 algorithm = input("Enter the algorithm you want to use for the AI(m for minimax and a for alpha-beta): ")
                 while(1):
                     if (algorithm == "m"):
                         self.algorithm = False
+                        self.log_filename = f"gameTrace-{algorithm}-{timeout}-{max_turns}.txt"
                         self.h_vs_ai(timeout, max_turns)
                     elif (algorithm == "a"):
                         self.algorithm = True
+                        self.log_filename = f"gameTrace-{algorithm}-{timeout}-{max_turns}.txt"
                         self.h_vs_ai(timeout, max_turns)
+
                     else:
                         algorithm = input("Incorrect input! Please try again: ")   
                         continue 
                 exit(1)
             elif game_mode == "4":
+                self.players = {"white": "AI", "black": "AI"}
                 timeout = input("Enter the maximum time (in seconds) allocated for the AI to make a move: ")
                 max_turns = input("Enter the maximum number of turns before the end of the game: ")
                 heuristic_white_AI = input("Enter the heuristic you'd like white AI to use (0,1,2): ")
@@ -850,10 +893,14 @@ class MiniChess:
                 while True:
                     if algorithm == "m":
                         self.algorithm = False
+                        self.log_filename = f"gameTrace-{algorithm}-{timeout}-{max_turns}.txt"
                         self.ai_vs_ai(timeout, max_turns, int(heuristic_white_AI), int(heuristic_black_AI))
+
                     elif algorithm == "a":
                         self.algorithm = True
+                        self.log_filename = f"gameTrace-{algorithm}-{timeout}-{max_turns}.txt"
                         self.ai_vs_ai(timeout, max_turns, int(heuristic_white_AI), int(heuristic_black_AI))
+
                     else:
                         algorithm = input("Incorrect input! Please try again: ")   
                         continue 
@@ -861,6 +908,9 @@ class MiniChess:
             else:
                 game_mode = input("Invalid Input! Please try again: ")
         exit(1)
+
+    def is_ai_player(self, player):
+        return self.players.get(player, "Human") == "AI"
 
     """
     Human vs Human game mode
@@ -885,7 +935,7 @@ class MiniChess:
                 print("Players draw... ending game")
                 exit(1)
             if self.turn_counter>int(max_turns):
-                with open("gameTrace-false-5-10.txt", "a") as file:
+                with open(self.log_filename.txt, "a") as file:
                     file.write("\nTurn limit reached at " + str(self.turn_counter - 1) + " turns")
                 print("Max turn reached... ending game")
                 exit(1)
@@ -919,8 +969,13 @@ class MiniChess:
             #Auto checking if it's a valid move from previous statement
             win_condition = self.check_win(self.current_game_state, move)
 
+
             #Making the move
             self.make_move(self.current_game_state, move)
+            #logging human move, no AI details here
+            if not self.is_ai_player(self.current_game_state["turn"]): #if human move then log move
+                self.log_move(self.current_game_state, move, max_turns=max_turns, timeout=None)
+
 
             #Printing the move information and the new board configuration
             printable_move = self.unparse_input(move) #unparsing the move to convert it to chess terminology
@@ -932,12 +987,12 @@ class MiniChess:
 
             if win_condition == "White King captured! Black wins!":
                 print(win_condition)
-                with open("gameTrace-false-5-10.txt", "a") as file:
+                with open(self.log_filename.txt, "a") as file:
                     file.write("\nWhite King captured! Black wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
             elif win_condition == "Black King captured! White wins!":
                 print(win_condition)
-                with open("gameTrace-false-5-10.txt", "a") as file:
+                with open(self.log_filename.txt, "a") as file:
                     file.write("\nBlack King captured! White wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
 
@@ -968,20 +1023,30 @@ class MiniChess:
                 print("Players draw... ending game")
                 exit(1)
             if self.turn_counter>int(max_turns):
-                with open("gameTrace-false-5-10.txt", "a") as file:
+                with open(self.log_filename.txt, "a") as file:
                     file.write("\nTurn limit reached at " + str(self.turn_counter - 1) + " turns")
                 print("Max turn reached... ending game")
                 exit(1)
             print(f"{self.current_game_state['turn'].capitalize()} to move: ")
             if self.current_game_state['turn'] == "white":
                 turn = "white"
+                start_time = time.perf_counter()
                 move_info = self.AI_makeMove(self.current_game_state, turn)
+                search_score = move_info[2]
                 #Unloading the first element of the tuple (best_move) into a move variable
                 move = move_info[0]
                 #Make the AI lose if the best move found is not the current list of valid moves
                 if not self.is_valid_move(self.current_game_state, move):
                     print("Invalid move entered by the AI! The Human wins.")
                     exit(1)
+                end_time = time.perf_counter()
+                ai_time_taken = end_time - start_time
+                heuristic_score = self.evaluate_board(self.current_game_state)
+                states_explored = self.total_states_explored  
+                depth_stats = self.depth_exploration_stats 
+                player_before_move = self.current_game_state["turn"]
+                self.log_move(self.current_game_state, move, timeout, max_turns, ai_time_taken, heuristic_score, search_score, states_explored, depth_stats, player_before_move)
+                ##here
                 print(self.unparse_input(move))
                 print("Time taken to find the move: " + str(move_info[1]) + " seconds")
                 #Ending the game if the AI takes longer than the timeout value to find the best move
@@ -1003,7 +1068,9 @@ class MiniChess:
 
             #Making the move
             self.make_move(self.current_game_state, move)
-
+            #if human log move
+            if not self.is_ai_player(self.current_game_state["turn"]): #if human move then log move
+                self.log_move(self.current_game_state, move, max_turns=max_turns, timeout=None)
             #Printing the move information and the new board configuration
             printable_move = self.unparse_input(move) #unparsing the move to convert it to chess terminology
             print("\nPlayer = " + self.current_game_state["turn"])
@@ -1014,12 +1081,12 @@ class MiniChess:
 
             if win_condition == "White King captured! Black wins!":
                 print(win_condition)
-                with open("gameTrace-false-5-10.txt", "a") as file:
+                with open(self.log_filename.txt, "a") as file:
                     file.write("\nWhite King captured! Black wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
             elif win_condition == "Black King captured! White wins!":
                 print(win_condition)
-                with open("gameTrace-false-5-10.txt", "a") as file:
+                with open(self.log_filename.txt, "a") as file:
                     file.write("\nBlack King captured! White wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
 
@@ -1050,7 +1117,7 @@ class MiniChess:
                 print("Players draw... ending game")
                 exit(1)
             if self.turn_counter>int(max_turns):
-                with open("gameTrace-false-5-10.txt", "a") as file:
+                with open(self.log_filename.txt, "a") as file:
                     file.write("\nTurn limit reached at " + str(self.turn_counter - 1) + " turns")
                 print("Max turn reached... ending game")
                 exit(1)
@@ -1096,12 +1163,12 @@ class MiniChess:
 
             if win_condition == "White King captured! Black wins!":
                 print(win_condition)
-                with open("gameTrace-false-5-10.txt", "a") as file:
+                with open(self.log_filename.txt, "a") as file:
                     file.write("\nWhite King captured! Black wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
             elif win_condition == "Black King captured! White wins!":
                 print(win_condition)
-                with open("gameTrace-false-5-10.txt", "a") as file:
+                with open(self.log_filename.txt, "a") as file:
                     file.write("\nBlack King captured! White wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
 
@@ -1133,7 +1200,7 @@ class MiniChess:
                 print("Players draw... ending game")
                 exit(1)
             if self.turn_counter>int(max_turns):
-                with open("gameTrace-false-5-10.txt", "a") as file:
+                with open(self.log_filename.txt, "a") as file:
                     file.write("\nTurn limit reached at " + str(self.turn_counter - 1) + " turns")
                 print("Max turn reached... ending game")
                 exit(1)
@@ -1188,12 +1255,12 @@ class MiniChess:
 
             if win_condition == "White King captured! Black wins!":
                 print(win_condition)
-                with open("gameTrace-false-5-10.txt", "a") as file:
+                with open(self.log_filename.txt, "a") as file:
                     file.write("\nWhite King captured! Black wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
             elif win_condition == "Black King captured! White wins!":
                 print(win_condition)
-                with open("gameTrace-false-5-10.txt", "a") as file:
+                with open(self.log_filename.txt, "a") as file:
                     file.write("\nBlack King captured! White wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
 
