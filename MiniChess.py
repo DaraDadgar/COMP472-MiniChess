@@ -14,7 +14,7 @@ class MiniChess:
         self.turn_counter = 1 #Variable to keep track of the current turn
         self.turn_with_piece_taken = 1 #Variable to keep track of the last turn a piece was taken.
         self.algorithm = None # True = alpha-beta | False = minimax
-        self.heuristic = 1 # controls which heuristic to use
+        self.heuristic = 2 # controls which heuristic to use
         self.depth = 1 #this the depth of how far we are exploring in the game tree
         self.invalid_move_counter = 0 #variable used to end the game if a human enters two invalid moves
         with open("gameTrace-false-5-10.txt", "w") as file:
@@ -447,6 +447,61 @@ class MiniChess:
             return False
 
     """
+    Returns the number of squares around a white king square that are taken by white pieces. Doing so, it validates the safety of the white king
+
+    Args:
+        - king_pos: tuple | a tuple holding the row and column index of the white king in the current state of the board
+        - game_state: dictionary | Dictionary representing the current game state
+    Returns:
+        - protection_sqaure: integer value holding the amount of squares around the king that are taken by white pieces
+    """
+    def white_king_safety(self, king_pos, game_state):
+        #Unload the tuple into king_row and king_col
+        king_row, king_col = king_pos
+        #variable to keep track of the numbers of squares next to the king square with a piece in them
+        protection_square = 0
+        for i in range(-1,2):
+            for j in range (-1,2):
+                #Skip the square where the king is
+                if i == 0 and j == 0:
+                    continue
+
+                new_row = king_row + i
+                new_col = king_col + j
+                if 0 <= new_row < 5 and 0 <= new_col < 5:
+                    piece = game_state["board"][new_row][new_col]
+                    if piece != "." and piece[0] == "w":  # Check if it's a white piece
+                        protection_square += 1
+        return protection_square
+    
+    """
+    Returns the number of squares around a black king square that are taken by black pieces. Doing so, it validates the safety of the black king
+
+    Args:
+        - king_pos: tuple | a tuple holding the row and column index of the black king in the current state of the board
+        - game_state: dictionary | Dictionary representing the current game state
+    Returns:
+        - protection_sqaure: integer value holding the amount of squares around the king that are taken by black pieces
+    """
+    def black_king_safety(self, king_pos, game_state):
+        #Unload the tuple into king_row and king_col
+        king_row, king_col = king_pos
+        #variable to keep track of the numbers of squares next to the king square with a piece in them
+        protection_square = 0
+        for i in range(-1,2):
+            for j in range (-1,2):
+                #Skip the square where the king is
+                if i == 0 and j == 0:
+                    continue
+                new_row = king_row + i
+                new_col = king_col + j
+                if 0 <= new_row < 5 and 0 <= new_col < 5:
+                    piece = game_state["board"][new_row][new_col]
+                    if piece != "." and piece[0] == "b":  # Check if it's a white piece
+                        protection_square += 1
+        return protection_square
+
+    """
     Evaluates a board state and updates the heuristic score based on the heuristic chosen (3 heuristics available)
     NOTE: White player tries to maximies and Black player tries to minimize in all heuristics
 
@@ -513,7 +568,45 @@ class MiniChess:
             return False,score
         #Heuristic 2
         else:      
-            return
+            piece_values = {"K": 999, "Q": 9, "B": 3, "N": 3, "p": 1}
+            score = 0
+            blackKing = False
+            whiteKing = False
+            #Assigning values to each piece on the board based on the heuristic function defined
+            for row_index, row in enumerate(game_state["board"]):  # Iterate over rows
+                for col_index, square in enumerate(row):
+                    if square != ".":
+                        value = piece_values[square[1]]
+                        #Increase the value of score if it is a white piece, otherwise decrease
+                        score += value if square[0] == "w" else -value
+                    if square == "wK":
+                        king_pos = (row_index, col_index) #storing the row and col index of the white king
+                        white_king_safety = self.white_king_safety(king_pos, game_state) * 0.5 #Assessing the white king's safety
+                        #Adjusting the score value based on the king safety factors of white and black
+                        score += white_king_safety
+                        whiteKing = True
+                    if square == "bK":
+                        king_pos = (row_index, col_index)
+                        black_king_safety = self.black_king_safety(king_pos, game_state) * 0.5 
+                        score -= black_king_safety
+                        blackKing = True
+            
+            #Adjusting the score value based on the total number of valid_moves for the current game_state
+            if (game_state["turn"] == "white"):
+                num_white_moves = len(self.valid_moves(game_state)) * 0.1
+                game_state["turn"] = "black"
+                num_black_moves = len(self.valid_moves(game_state)) * 0.1
+                game_state["turn"] = "white"
+            else:
+                num_black_moves = len(self.valid_moves(game_state)) * 0.1
+                game_state["turn"] = "white"
+                num_white_moves = len(self.valid_moves(game_state)) * 0.1
+                game_state["turn"] = "black"
+                
+            score += (num_white_moves - num_black_moves)
+
+            if whiteKing == False or blackKing == False: return True,score
+            return False,score
 
     """
     Simulates a move on the board. Used by the minimax and alpha-beta algorithms to find the heuristic value of a new board state.
@@ -959,8 +1052,21 @@ class MiniChess:
                     exit(1)
                 move = self.parse_input(move)
                 if not move or not self.is_valid_move(self.current_game_state, move):
-                    print("Invalid move. Try again.")
-                    continue
+                    if self.invalid_move_counter < 2:
+                        self.invalid_move_counter += 1  # incrementing the count of invalid moves
+
+                        # Ending the game if two invalid moves are entered
+                        if self.invalid_move_counter == 2:
+                            print("You entered two invalid moves in a row!")
+                            print("White wins!")   
+                            exit(1)
+
+                        # Otherwise, we alert the user for their invalid move and continue the loop
+                        else:
+                            print("Invalid move. Try again.")
+                            continue
+                else:
+                    self.invalid_move_counter = 0  # Reset counter when a valid move is entered
                     
             #Auto checking if it's a valid move from previous statement
             win_condition = self.check_win(self.current_game_state, move)
@@ -1041,8 +1147,21 @@ class MiniChess:
                     exit(1)
                 move = self.parse_input(move)
                 if not move or not self.is_valid_move(self.current_game_state, move):
-                    print("Invalid move. Try again.")
-                    continue
+                    if self.invalid_move_counter < 2:
+                        self.invalid_move_counter += 1  # incrementing the count of invalid moves
+
+                        # Ending the game if two invalid moves are entered
+                        if self.invalid_move_counter == 2:
+                            print("You entered two invalid moves in a row!")
+                            print("Black wins!")   
+                            exit(1)
+
+                        # Otherwise, we alert the user for their invalid move and continue the loop
+                        else:
+                            print("Invalid move. Try again.")
+                            continue
+                else:
+                    self.invalid_move_counter = 0  # Reset counter when a valid move is entered
 
             #Auto checking if it's a valid move from previous statement
             win_condition = self.check_win(self.current_game_state, move)
