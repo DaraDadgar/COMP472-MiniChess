@@ -12,17 +12,11 @@ class MiniChess:
         self.turn_with_piece_taken = 1 #Variable to keep track of the last turn a piece was taken.
         self.algorithm = None # True = alpha-beta | False = minimax
         self.heuristic = 1 # controls which heuristic to use
-        self.depth = 1 #this the depth of how far we are exploring in the game tree
+        self.depth = 3 #this the depth of how far we are exploring in the game tree
         self.invalid_move_counter = 0 #variable used to end the game if a human enters two invalid moves
         self.AI_time_out = 0.0005 # time before AI needs to exit loops
         self.AI_Start_Time = 0.0001
-        with open("gameTrace-false-5-10.txt", "w") as file:
-            file.write("NEW GAME START!\n\nGAME PARAMETERS:\n")
-            file.write("Timeout = 5\nMax Number of Turns = 100\nPlay Mode = H-H")
-            file.write("\n\nInitial configuration:\n")
-            for i, row in enumerate(self.current_game_state["board"], start=1):
-                file.write(str(6 - i) + "  " + ' '.join(piece.rjust(3) for piece in row))
-                file.write("\n")
+        self.log_filename = "lol.txt"
     """
     Initialize the board
 
@@ -267,7 +261,7 @@ class MiniChess:
                 search_score=0, states_explored=0, depth_stats=None, player=None):
         """Logs moves made by AI or Human based on game mode and player type."""
 
-        file_name = f"gameTrace-{self.algorithm}-{timeout}-{max_turns}.txt"
+        file_name = self.log_filename
 
 
 
@@ -852,17 +846,20 @@ class MiniChess:
                 while(1):
                     if (algorithm == "m"):
                         self.algorithm = False
-                        self.log_filename = f"gameTrace-{algorithm}-{timeout}-{max_turns}.txt"
-                        self.ai_vs_h(timeout, max_turns)
-
                     elif (algorithm == "a"):
                         self.algorithm = True
-                        self.log_filename = f"gameTrace-{algorithm}-{timeout}-{max_turns}.txt"
-                        self.ai_vs_h(timeout, max_turns)
-
                     else:
                         algorithm = input("Incorrect input! Please try again: ")   
-                        continue 
+                        continue
+                    self.log_filename = f"gameTrace-{algorithm}-{timeout}-{max_turns}.txt"
+                    with open(self.log_filename, "w") as file:
+                        file.write("NEW GAME START!\n\nGAME PARAMETERS:\n")
+                        file.write("Timeout = 5\nMax Number of Turns = 100\nPlay Mode = H-H")
+                        file.write("\n\nInitial configuration:\n")
+                        for i, row in enumerate(self.current_game_state["board"], start=1):
+                            file.write(str(6 - i) + "  " + ' '.join(piece.rjust(3) for piece in row))
+                            file.write("\n")
+                    self.ai_vs_h(timeout, max_turns)
                 exit(1)
             elif game_mode == "3":
                 self.players = {"white": "Human", "black": "AI"}
@@ -880,8 +877,8 @@ class MiniChess:
                         self.h_vs_ai(timeout, max_turns)
 
                     else:
-                        algorithm = input("Incorrect input! Please try again: ")   
-                        continue 
+                        algorithm = input("Incorrect input! Please try again: ")
+                        continue
                 exit(1)
             elif game_mode == "4":
                 self.players = {"white": "AI", "black": "AI"}
@@ -902,8 +899,8 @@ class MiniChess:
                         self.ai_vs_ai(timeout, max_turns, int(heuristic_white_AI), int(heuristic_black_AI))
 
                     else:
-                        algorithm = input("Incorrect input! Please try again: ")   
-                        continue 
+                        algorithm = input("Incorrect input! Please try again: ")
+                        continue
                 exit(1)
             else:
                 game_mode = input("Invalid Input! Please try again: ")
@@ -1081,12 +1078,12 @@ class MiniChess:
 
             if win_condition == "White King captured! Black wins!":
                 print(win_condition)
-                with open(self.log_filename.txt, "a") as file:
+                with open(self.log_filename, "a") as file:
                     file.write("\nWhite King captured! Black wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
             elif win_condition == "Black King captured! White wins!":
                 print(win_condition)
-                with open(self.log_filename.txt, "a") as file:
+                with open(self.log_filename, "a") as file:
                     file.write("\nBlack King captured! White wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
 
