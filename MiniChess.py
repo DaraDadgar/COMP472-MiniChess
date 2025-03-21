@@ -16,8 +16,6 @@ class MiniChess:
         self.invalid_move_counter = 0 #variable used to end the game if a human enters two invalid moves
         self.AI_time_out = 0.0005 # time before AI needs to exit loops
         self.AI_Start_Time = 0.0001
-        self.AI_time_out = 0.0005 # time before AI needs to exit loops
-        self.AI_Start_Time = 0.0001
         self.log_filename = "lol.txt"
     """
     Initialize the board
@@ -609,17 +607,18 @@ class MiniChess:
             score = 0
             blackKing = False
             whiteKing = False
-            #Assigning values to each piece on the board based on the heuristic function defined
+            # Assigning values to each piece on the board based on the heuristic function defined
             for row_index, row in enumerate(game_state["board"]):  # Iterate over rows
                 for col_index, square in enumerate(row):
                     if square != ".":
                         value = piece_values[square[1]]
-                        #Increase the value of score if it is a white piece, otherwise decrease
+                        # Increase the value of score if it is a white piece, otherwise decrease
                         score += value if square[0] == "w" else -value
                     if square == "wK":
-                        king_pos = (row_index, col_index) #storing the row and col index of the white king
-                        white_king_safety = self.white_king_safety(king_pos, game_state) * 0.5 #Assessing the white king's safety
-                        #Adjusting the score value based on the king safety factors of white and black
+                        king_pos = (row_index, col_index)  # storing the row and col index of the white king
+                        white_king_safety = self.white_king_safety(king_pos,
+                                                                   game_state) * 0.5  # Assessing the white king's safety
+                        # Adjusting the score value based on the king safety factors of white and black
                         score += white_king_safety
                         whiteKing = True
                     if square == "bK":
@@ -628,7 +627,7 @@ class MiniChess:
                         score -= black_king_safety
                         blackKing = True
 
-            #Adjusting the score value based on the total number of valid_moves for the current game_state
+            # Adjusting the score value based on the total number of valid_moves for the current game_state
             if (game_state["turn"] == "white"):
                 num_white_moves = len(self.valid_moves(game_state)) * 0.1
                 game_state["turn"] = "black"
@@ -642,8 +641,8 @@ class MiniChess:
 
             score += (num_white_moves - num_black_moves)
 
-            if whiteKing == False or blackKing == False: return True,score
-            return False,score
+            if whiteKing == False or blackKing == False: return True, score
+            return False, score
 
     """
     Simulates a move on the board. Used by the minimax and alpha-beta algorithms to find the heuristic value of a new board state.
@@ -1021,7 +1020,7 @@ class MiniChess:
                 print("Players draw... ending game")
                 exit(1)
             if self.turn_counter>int(max_turns):
-                with open(self.log_filename.txt, "a") as file:
+                with open(self.log_filename, "a") as file:
                     file.write("\nTurn limit reached at " + str(self.turn_counter - 1) + " turns")
                 print("Max turn reached... ending game")
                 exit(1)
@@ -1073,12 +1072,12 @@ class MiniChess:
 
             if win_condition == "White King captured! Black wins!":
                 print(win_condition)
-                with open(self.log_filename.txt, "a") as file:
+                with open(self.log_filename, "a") as file:
                     file.write("\nWhite King captured! Black wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
             elif win_condition == "Black King captured! White wins!":
                 print(win_condition)
-                with open(self.log_filename.txt, "a") as file:
+                with open(self.log_filename, "a") as file:
                     file.write("\nBlack King captured! White wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
 
@@ -1109,7 +1108,7 @@ class MiniChess:
                 print("Players draw... ending game")
                 exit(1)
             if self.turn_counter>int(max_turns):
-                with open(self.log_filename.txt, "a") as file:
+                with open(self.log_filename, "a") as file:
                     file.write("\nTurn limit reached at " + str(self.turn_counter - 1) + " turns")
                 print("Max turn reached... ending game")
                 exit(1)
@@ -1275,12 +1274,12 @@ class MiniChess:
 
             if win_condition == "White King captured! Black wins!":
                 print(win_condition)
-                with open(self.log_filename.txt, "a") as file:
+                with open(self.log_filename, "a") as file:
                     file.write("\nWhite King captured! Black wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
             elif win_condition == "Black King captured! White wins!":
                 print(win_condition)
-                with open(self.log_filename.txt, "a") as file:
+                with open(self.log_filename, "a") as file:
                     file.write("\nBlack King captured! White wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
 
@@ -1313,7 +1312,7 @@ class MiniChess:
                 print("Players draw... ending game")
                 exit(1)
             if self.turn_counter>int(max_turns):
-                with open(self.log_filename.txt, "a") as file:
+                with open(self.log_filename, "a") as file:
                     file.write("\nTurn limit reached at " + str(self.turn_counter - 1) + " turns")
                 print("Max turn reached... ending game")
                 exit(1)
@@ -1354,18 +1353,15 @@ class MiniChess:
 
             #Auto checking if it's a valid move from previous statement
             win_condition = self.check_win(self.current_game_state, move)
-
-            #Making the move
-            self.make_move(self.current_game_state, move)
-
-            #Printing the move information and the new board configuration
-            printable_move = self.unparse_input(move) #unparsing the move to convert it to chess terminology
+            # Printing the move information and the new board configuration
+            printable_move = self.unparse_input(move)  # unparsing the move to convert it to chess terminology
             print("\nPlayer = " + self.current_game_state["turn"])
             print("Turn #" + str(self.turn_counter))
             print("Move from " + printable_move[0] + " to " + printable_move[1])
+            #Making the move
+            self.make_move(self.current_game_state, move)
             print("New configuration:\n")
             self.display_board(self.current_game_state)
-
             if win_condition == "White King captured! Black wins!":
                 print(win_condition)
                 with open(self.log_filename, "a") as file:
