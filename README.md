@@ -11,15 +11,17 @@ The purpose of this project is to implement minimax, alpha-beta and develop adve
 - **Win Condition**: The game ends when a player captures the opponent's king.
 - **Draw Condition**: The game can end in a draw if no pieces are captured for a specified number of turns.
 - **Game Logging**: The game logs each move and the state of the board to a text file for further analysis.
-- **Adversarial Search**: Implements a minimax algorithm with alpha-beta pruning for AI decision-making.
-- **Heuristics**: Includes at least 2 heuristics to evaluate board states and guide the AI's strategy.
-- **Play Modes**: Supports human vs. human (H-H), human vs. AI, and AI vs. AI play modes.
+- **Adversarial Search**: Implements a minimax and an alpha-beta pruning algorithms for AI decision-making.
+- **Heuristics**: Includes 3 heuristics to evaluate board states and guide the AI's strategy. The user chooses the heuristic used by the AI.
+- **Play Modes**: Supports human vs. human, AI vs. human, human vs. AI and AI vs. AI play modes.
 
 ## How to Play
 
-1. **Starting the Game**: Run the script to start the game. The initial board configuration will be displayed.
-2. **Making Moves**: Players take turns entering moves in the format `B2 B3`, where `B2` is the starting position and `B3` is the destination.
-3. **Game End**: The game ends when a player captures the opponent's king or if a draw condition is met.
+1. **Starting the Game**: Run the script to start the game.
+2. **Select a Game Mode**: Select your preferred game mode out of the 4 game modes displayed (HvsH, AIvsH, HvsAI, AIvsAI).
+3. **Add the Game Parameters**: Based on the game mode selection, enter the requested parameters such as timeout, maximum number of turns and AI algorithm to use.
+4. **Making a Move**: When it is your turn, the game asks you to enter a move. You can enter a move by simply writing the starting and end positions of your move (E1 E2).
+5. **Game End**: The game ends when a player captures the opponent's king or if a draw condition is met.
 
 ## Code Structure
 
@@ -42,6 +44,7 @@ The purpose of this project is to implement minimax, alpha-beta and develop adve
   - `make_move(game_state, move)`: Updates the game state based on the move.
   - `check_win(game_state, move)`: Checks if the move results in a win.
   - `check_draw()`: Checks if the game has reached a draw condition.
+  - `log_move()`: Logs the move information to the game file previously generated
   - `play()`: The main game loop that handles player input and game progression.
 
 ## Dependencies
