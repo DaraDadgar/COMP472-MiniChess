@@ -5,9 +5,6 @@ import argparse
 from string import whitespace
 from xml.etree.ElementTree import tostring
 
-# from selenium.webdriver.common.devtools.v85.runtime import evaluate
-
-
 class MiniChess:
     def __init__(self):
         self.current_game_state = self.init_board()
@@ -264,11 +261,11 @@ class MiniChess:
         - game_state: dict | the current game state dictionary
         - move: tuple | the move as dictionary coordinates
     """
-    def log_move(self, game_state, move, ai_time=0, heuristic_score=0, search_score=0, states_explored=0, depth_stats=None):
+    def log_move(self, game_state, move, timeout, max_turns, ai_time=0, heuristic_score=0, search_score=0, states_explored=0, depth_stats=None):
 
         # Dynamically generate the file name
-        timeout = 5  # Timeout in seconds (can be parameterized)
-        max_turns = 100  # Max number of turns (can be parameterized)
+        # timeout = 5  # Timeout in seconds (can be parameterized)
+        # max_turns = 100  # Max number of turns (can be parameterized)
         file_name = f"gameTrace-{self.algorithm}-{timeout}-{max_turns}.txt"
 
         # Open the file in append mode
@@ -604,7 +601,10 @@ class MiniChess:
         piece_values = {"K": 999, "Q": 9, "B": 3, "N": 3, "p": 1}
         MoveList = self.valid_moves(game_state)
         game_end,board_heuristic = self.evaluate_board(game_state)
-
+        
+        if game_end:  # No valid moves, return heuristic as is (Case if parent is win/loss condition)
+            return (None, board_heuristic)
+                
         #initialize tracking variables for stats
         if not hasattr(self, "total_states_explored"):
             self.total_states_explored = 0  
@@ -616,9 +616,6 @@ class MiniChess:
         if current_depth not in self.depth_exploration_stats:
             self.depth_exploration_stats[current_depth] = 0
         self.depth_exploration_stats[current_depth] += 1
-
-        if game_end:  # No valid moves, return heuristic as is (Case if parent is win/loss condition)
-            return (None, board_heuristic)
 
         if current_depth % 2 == 1:  # Max node (AI's turn)
             current_best_heuristic = alpha
@@ -800,9 +797,9 @@ class MiniChess:
         eval_time = round(end - start, 7)
         #Storing the best move found by the algorithm chosen
         best_move = results[0]    
-
+        heuristic_score = results[1]
         #returns the best move found using either alpha-beta or minimax algorithm and the time taken to find that move
-        result_info = best_move, eval_time
+        result_info = best_move, eval_time, heuristic_score
         return result_info
 
     """
@@ -937,8 +934,8 @@ class MiniChess:
             self.make_move(self.current_game_state, move)
             #logging human move, no AI details here
             #if() #if human move then log move
-            self.log_move(self.current_game_state, move)
-    
+            self.log_move(self.current_game_state, move, max_turns=max_turns, timeout=None)
+
 
             #Printing the move information and the new board configuration
             printable_move = self.unparse_input(move) #unparsing the move to convert it to chess terminology
@@ -994,7 +991,8 @@ class MiniChess:
             if self.current_game_state['turn'] == "white":
                 turn = "white"
                 start_time = time.perf_counter()
-                move_info, search_score = self.AI_makeMove(self.current_game_state, turn)
+                move_info = self.AI_makeMove(self.current_game_state, turn)
+                search_score = move_info[2]
                 #Unloading the first element of the tuple (best_move) into a move variable
                 move = move_info[0]
                 #Make the AI lose if the best move found is not the current list of valid moves
@@ -1006,7 +1004,7 @@ class MiniChess:
                 heuristic_score = self.evaluate_board(self.current_game_state)
                 states_explored = self.total_states_explored  
                 depth_stats = self.depth_exploration_stats 
-                self.log_move(self.current_game_state, move, ai_time_taken, heuristic_score, search_score, states_explored, depth_stats)
+                self.log_move(self.current_game_state, move, timeout, max_turns, ai_time_taken, heuristic_score, search_score, states_explored, depth_stats)
                 ##here
                 print(self.unparse_input(move))
                 print("Time taken to find the move: " + str(move_info[1]) + " seconds")
