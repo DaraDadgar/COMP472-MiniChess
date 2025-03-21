@@ -12,7 +12,7 @@ class MiniChess:
         self.turn_with_piece_taken = 1 #Variable to keep track of the last turn a piece was taken.
         self.algorithm = None # True = alpha-beta | False = minimax
         self.heuristic = 2 # controls which heuristic to use
-        self.depth = 1 #this the depth of how far we are exploring in the game tree
+        self.depth = 3 #this the depth of how far we are exploring in the game tree
         self.invalid_move_counter = 0 #variable used to end the game if a human enters two invalid moves
         self.AI_time_out = 0.0005 # time before AI needs to exit loops
         self.AI_Start_Time = 0.0001
@@ -30,7 +30,7 @@ class MiniChess:
     """
     def init_board(self):
         state = {
-                "board":
+                "board": 
                 [['bK', 'bQ', 'bB', 'bN', '.'],
                 ['.', '.', 'bp', 'bp', '.'],
                 ['.', '.', '.', '.', '.'],
@@ -189,7 +189,7 @@ class MiniChess:
     """
     Updates the list of valid moves with the valid moves for the "Bishop" piece
     
-    """
+    """  
     def bishop_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves):
         directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]  # top left, top right, bottom left, bottom right
         for d in directions:
@@ -240,7 +240,7 @@ class MiniChess:
                 i += d[0]
                 j += d[1]
         return
-
+    
     """
     Converts the row numbers into letters for syntax validity
 
@@ -338,7 +338,7 @@ class MiniChess:
         game_state["board"][start_row][start_col] = '.'
         game_state["board"][end_row][end_col] = piece
         #Logging the move performed
-        # self.log_move(game_state,move) #Logging the move of the player
+        #self.log_move(game_state,move)
         #Promoting the pawns if they reach the end row
         if piece == "wp" and end_row == 0:
             game_state["board"][end_row][end_col] = "wQ"
@@ -510,7 +510,7 @@ class MiniChess:
                     if piece != "." and piece[0] == "w":  # Check if it's a white piece
                         protection_square += 1
         return protection_square
-    
+
     """
     Returns the number of squares around a black king square that are taken by black pieces. Doing so, it validates the safety of the black king
 
@@ -624,10 +624,10 @@ class MiniChess:
                         whiteKing = True
                     if square == "bK":
                         king_pos = (row_index, col_index)
-                        black_king_safety = self.black_king_safety(king_pos, game_state) * 0.5 
+                        black_king_safety = self.black_king_safety(king_pos, game_state) * 0.5
                         score -= black_king_safety
                         blackKing = True
-            
+
             #Adjusting the score value based on the total number of valid_moves for the current game_state
             if (game_state["turn"] == "white"):
                 num_white_moves = len(self.valid_moves(game_state)) * 0.1
@@ -639,7 +639,7 @@ class MiniChess:
                 game_state["turn"] = "white"
                 num_white_moves = len(self.valid_moves(game_state)) * 0.1
                 game_state["turn"] = "black"
-                
+
             score += (num_white_moves - num_black_moves)
 
             if whiteKing == False or blackKing == False: return True,score
@@ -735,8 +735,6 @@ class MiniChess:
         current_Beta = beta
         # Loop start to evaluate children
         for move in MoveList:
-            if (time.perf_counter() - self.AI_Start_Time) + 0.00005 > self.AI_time_out:
-                return current_best_move,current_best_heuristic  # Return the best move found so far
             move = self.parse_input_v2(move) # ((A,2),(B,2)) => ((3,0),(
             # Will do recursion to go to children for internal nodes
             if current_depth < self.depth:  # If we're not at the max depth then go one layer down by simulating the move
@@ -808,69 +806,68 @@ class MiniChess:
         - best_move: the best move from the current board state after developing the full game tree
         - best_value: the heuristic value of the best move to be taken 
     """
-    def minimax(self, game_state, current_depth):
+
+    def mini_max(self, game_state, current_depth):
+        piece_values = {"K": 999, "Q": 9, "B": 3, "N": 3, "p": 1}
+        move_list = self.valid_moves(game_state)
+        game_end, board_heuristic = self.evaluate_board(game_state)
+
+        # Terminal state: no valid moves or game-over condition
+        if game_end:
+            return (None, board_heuristic)
+
         # Initialize tracking variables for stats
         if not hasattr(self, "total_states_explored"):
             self.total_states_explored = 0
             self.depth_exploration_stats = {}
-
-        # Update the total number of states explored
         self.total_states_explored += 1
-
-        # Update the depth exploration stats
         if current_depth not in self.depth_exploration_stats:
             self.depth_exploration_stats[current_depth] = 0
         self.depth_exploration_stats[current_depth] += 1
 
-        # Get the list of valid moves and evaluate the current board
-        MoveList = self.valid_moves(game_state)
-        current_board_value = self.evaluate_board(game_state)
+        # Set initial best heuristic based on node type:
+        # For max nodes (AI's turn), start with -infinity.
+        # For min nodes (opponent's turn), start with +infinity.
+        if current_depth % 2 == 1:
+            current_best_heuristic = -float("inf")
+        else:
+            current_best_heuristic = float("inf")
+        current_best_move = None
 
-        # Terminal condition: No moves available(win, loss or draw) or reached maximum depth
-        #TODO: make sure the valid_moves is empty after a draw, win or loss??
-        if not MoveList:
-            return (None, current_board_value)
-        if current_depth == self.depth:
-            return (None, current_board_value)
+        # Evaluate each possible move
+        for move in move_list:
+            move = self.parse_input_v2(move)  # convert move notation if needed
 
-        # Determine if this is a max node/white's turn or a min node/black's turn
-        if current_depth % 2 == 1:  # Max node (turn = white)
-            best_value = -math.inf
-            best_move = None
-            for move in MoveList:
-                # Convert move to internal format
-                move = self.parse_input_v2(move)
-
-                # Simulate the move (modifies game_state in place)
+            if current_depth < self.depth:
+                # Simulate making the move
                 original_piece, captured_piece, game_state = self.simulate_make_move(game_state, move)
+                # Recursively call mini_max for the next depth
+                _, score = self.mini_max(game_state, current_depth + 1)
 
-                # Recursively evaluate the resulting board state
-                _, child_value = self.minimax(game_state, current_depth + 1)
+                # Choose the best score for max and min nodes
+                if current_depth % 2 == 1 and score > current_best_heuristic:  # max node: choose maximum score
+                    current_best_heuristic = score
+                    current_best_move = move
+                elif current_depth % 2 == 0 and score < current_best_heuristic:  # min node: choose minimum score
+                    current_best_heuristic = score
+                    current_best_move = move
 
-                # Undo the move to restore the original state
-                self.simulate_unmake_move(game_state, move, captured_piece, original_piece)
-
-                # Update if this move is better than previously seen moves
-                if child_value > best_value:
-                    best_value = child_value
-                    best_move = move
-
-            return (best_move, best_value)
-        else:  # Min node (black = turn)
-            best_value = math.inf
-            best_move = None
-            for move in MoveList:
-                move = self.parse_input_v2(move)
+                # Undo the move simulation to restore the game state
+                game_state = self.simulate_unmake_move(game_state, move, captured_piece, original_piece)
+            else:
+                # At maximum depth, evaluate the board after making the move
                 original_piece, captured_piece, game_state = self.simulate_make_move(game_state, move)
-                _, child_value = self.minimax(game_state, current_depth + 1)
-                self.simulate_unmake_move(game_state, move, captured_piece, original_piece)
+                _, move_heuristic = self.evaluate_board(game_state)
+                game_state = self.simulate_unmake_move(game_state, move, captured_piece, original_piece)
 
-                # Update if this move is lower than previously seen moves
-                if child_value < best_value:
-                    best_value = child_value
-                    best_move = move
+                if current_depth % 2 == 1 and move_heuristic > current_best_heuristic:
+                    current_best_heuristic = move_heuristic
+                    current_best_move = move
+                elif current_depth % 2 == 0 and move_heuristic < current_best_heuristic:
+                    current_best_heuristic = move_heuristic
+                    current_best_move = move
 
-            return (best_move, best_value)
+        return current_best_move, current_best_heuristic
 
     """
     Return the best move to be performed by the AI after running either minimax or alpha-beta algorithms.
@@ -897,8 +894,11 @@ class MiniChess:
             results = self.alpha_beta(game_state,start_depth,-15000,15000)
             end = time.perf_counter() #ending the timer once the algorithm finishes execution
         else:
+            start = time.time()
+            results = self.mini_max(game_state,start_depth)
+            end = time.time()
             self.AI_Start_Time = time.perf_counter()
-            results = self.minimax(game_state,start_depth)
+            results = self.mini_max(game_state,start_depth)
             end = time.perf_counter()
 
         if revertDepth:
@@ -913,6 +913,8 @@ class MiniChess:
         result_info = best_move, eval_time, heuristic_score
         return result_info
 
+    def is_ai_player(self, player):
+        return self.players.get(player, "Human") == "AI"
     """
     Main game loop which inputs the user to choose their prefered game mode and game parameters
     and launches that game mode
@@ -966,21 +968,16 @@ class MiniChess:
                 while(1):
                     if (algorithm == "m"):
                         self.algorithm = False
-                        self.log_filename = f"gameTrace-{algorithm}-{timeout}-{max_turns}.txt"
                         self.h_vs_ai(timeout, max_turns)
                     elif (algorithm == "a"):
                         self.algorithm = True
-                        self.log_filename = f"gameTrace-{algorithm}-{timeout}-{max_turns}.txt"
                         self.h_vs_ai(timeout, max_turns)
 
                     else:
                         algorithm = input("Incorrect input! Please try again: ")
                         continue
-                        algorithm = input("Incorrect input! Please try again: ")
-                        continue
                 exit(1)
             elif game_mode == "4":
-                self.players = {"white": "AI", "black": "AI"}
                 timeout = input("Enter the maximum time (in seconds) allocated for the AI to make a move: ")
                 max_turns = input("Enter the maximum number of turns before the end of the game: ")
                 heuristic_white_AI = input("Enter the heuristic you'd like white AI to use (0,1,2): ")
@@ -989,24 +986,17 @@ class MiniChess:
                 while True:
                     if algorithm == "m":
                         self.algorithm = False
-                        self.log_filename = f"gameTrace-{algorithm}-{timeout}-{max_turns}.txt"
                         self.ai_vs_ai(timeout, max_turns, int(heuristic_white_AI), int(heuristic_black_AI))
-
                     elif algorithm == "a":
                         self.algorithm = True
-                        self.log_filename = f"gameTrace-{algorithm}-{timeout}-{max_turns}.txt"
                         self.ai_vs_ai(timeout, max_turns, int(heuristic_white_AI), int(heuristic_black_AI))
-
                     else:
-                        algorithm = input("Incorrect input! Please try again: ")
-                        continue
+                        algorithm = input("Incorrect input! Please try again: ")   
+                        continue 
                 exit(1)
             else:
                 game_mode = input("Invalid Input! Please try again: ")
         exit(1)
-
-    def is_ai_player(self, player):
-        return self.players.get(player, "Human") == "AI"
 
     """
     Human vs Human game mode
@@ -1138,8 +1128,8 @@ class MiniChess:
                 end_time = time.perf_counter()
                 ai_time_taken = end_time - start_time
                 heuristic_score = self.evaluate_board(self.current_game_state)
-                states_explored = self.total_states_explored  
-                depth_stats = self.depth_exploration_stats 
+                states_explored = self.total_states_explored
+                depth_stats = self.depth_exploration_stats
                 player_before_move = self.current_game_state["turn"]
                 self.log_move(self.current_game_state, move, timeout, max_turns, ai_time_taken, heuristic_score, search_score, states_explored, depth_stats, player_before_move)
                 ##here
@@ -1162,7 +1152,7 @@ class MiniChess:
                         # Ending the game if two invalid moves are entered
                         if self.invalid_move_counter == 2:
                             print("You entered two invalid moves in a row!")
-                            print("White wins!")   
+                            print("White wins!")
                             exit(1)
 
                         # Otherwise, we alert the user for their invalid move and continue the loop
@@ -1226,7 +1216,7 @@ class MiniChess:
                 print("Players draw... ending game")
                 exit(1)
             if self.turn_counter>int(max_turns):
-                with open(self.log_filename.txt, "a") as file:
+                with open(self.log_filename, "a") as file:
                     file.write("\nTurn limit reached at " + str(self.turn_counter - 1) + " turns")
                 print("Max turn reached... ending game")
                 exit(1)
@@ -1259,7 +1249,7 @@ class MiniChess:
                         # Ending the game if two invalid moves are entered
                         if self.invalid_move_counter == 2:
                             print("You entered two invalid moves in a row!")
-                            print("Black wins!")   
+                            print("Black wins!")
                             exit(1)
 
                         # Otherwise, we alert the user for their invalid move and continue the loop
@@ -1304,6 +1294,7 @@ class MiniChess:
     Returns:
         - None
     """
+
     def ai_vs_ai(self, timeout, max_turns, white_heuristic, black_heuristic):
         #Checking the algorithm chosen by the user
         if self.algorithm: alg = "Alpha-Beta"
@@ -1377,12 +1368,12 @@ class MiniChess:
 
             if win_condition == "White King captured! Black wins!":
                 print(win_condition)
-                with open(self.log_filename.txt, "a") as file:
+                with open(self.log_filename, "a") as file:
                     file.write("\nWhite King captured! Black wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
             elif win_condition == "Black King captured! White wins!":
                 print(win_condition)
-                with open(self.log_filename.txt, "a") as file:
+                with open(self.log_filename, "a") as file:
                     file.write("\nBlack King captured! White wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
 
