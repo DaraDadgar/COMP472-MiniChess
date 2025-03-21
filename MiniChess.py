@@ -14,6 +14,8 @@ class MiniChess:
         self.heuristic = 1 # controls which heuristic to use
         self.depth = 1 #this the depth of how far we are exploring in the game tree
         self.invalid_move_counter = 0 #variable used to end the game if a human enters two invalid moves
+        self.AI_time_out = 0.0005 # time before AI needs to exit loops
+        self.AI_Start_Time = 0.0001
         with open("gameTrace-false-5-10.txt", "w") as file:
             file.write("NEW GAME START!\n\nGAME PARAMETERS:\n")
             file.write("Timeout = 5\nMax Number of Turns = 100\nPlay Mode = H-H")
@@ -32,7 +34,7 @@ class MiniChess:
     """
     def init_board(self):
         state = {
-                "board": 
+                "board":
                 [['bK', 'bQ', 'bB', 'bN', '.'],
                 ['.', '.', 'bp', 'bp', '.'],
                 ['.', '.', '.', '.', '.'],
@@ -307,7 +309,20 @@ class MiniChess:
                 file.write("\n")
 
             file.write("\n")  # Blank line for readability
-            
+
+        return
+
+    """
+    Modify the board to make a move
+
+    Args: 
+        - game_state:   dictionary | Dictionary representing the current game state
+        - move          tuple | the move to perform ((start_row, start_col),(end_row, end_col))
+    Returns:
+        - game_state:   dictionary | Dictionary representing the modified game state
+    """
+
+
     def make_move(self, game_state, move):
         start = move[0]
         end = move[1]
@@ -339,14 +354,14 @@ class MiniChess:
         #return the new game state after the move has been performed
         return game_state
 
-        """
-            Parse the input string and modify it into board coordinates
+    """
+    Parse the input string and modify it into board coordinates
 
-            Args:
-                - move: string representing a move "B2 B3"
-            Returns:
-                - (start, end)  tuple | the move to perform ((start_row, start_col),(end_row, end_col))
-        """
+    Args:
+        - move: string representing a move "B2 B3"
+    Returns:
+        - (start, end)  tuple | the move to perform ((start_row, start_col),(end_row, end_col))
+    """
     def parse_input(self, move):
         try:
             start, end = move.split() #Splits the move (B2 B3) into start=B2 and end=B3
@@ -601,21 +616,8 @@ class MiniChess:
         piece_values = {"K": 999, "Q": 9, "B": 3, "N": 3, "p": 1}
         MoveList = self.valid_moves(game_state)
         game_end,board_heuristic = self.evaluate_board(game_state)
-        
         if game_end:  # No valid moves, return heuristic as is (Case if parent is win/loss condition)
             return (None, board_heuristic)
-                
-        #initialize tracking variables for stats
-        if not hasattr(self, "total_states_explored"):
-            self.total_states_explored = 0  
-            self.depth_exploration_stats = {}
-        #update the total number of states explored
-        self.total_states_explored += 1
-
-        #update the depth exploration stats
-        if current_depth not in self.depth_exploration_stats:
-            self.depth_exploration_stats[current_depth] = 0
-        self.depth_exploration_stats[current_depth] += 1
 
         if current_depth % 2 == 1:  # Max node (AI's turn)
             current_best_heuristic = alpha
@@ -698,24 +700,11 @@ class MiniChess:
         - best_value: the heuristic value of the best move to be taken 
     """
     def minimax(self, game_state, current_depth):
-        # Initialize tracking variables for stats
-        if not hasattr(self, "total_states_explored"):
-            self.total_states_explored = 0
-            self.depth_exploration_stats = {}
-
-        # Update the total number of states explored
-        self.total_states_explored += 1
-
-        # Update the depth exploration stats
-        if current_depth not in self.depth_exploration_stats:
-            self.depth_exploration_stats[current_depth] = 0
-        self.depth_exploration_stats[current_depth] += 1
-
-        # Get the list of valid moves and evaluate the current board
+        # Get the list of valid moves and evaluate the current board.
         MoveList = self.valid_moves(game_state)
         current_board_value = self.evaluate_board(game_state)
 
-        # Terminal condition: No moves available(win, loss or draw) or reached maximum depth
+        # Terminal condition: No moves available(win, loss or draw) or reached maximum depth.
         #TODO: make sure the valid_moves is empty after a draw, win or loss??
         if not MoveList:
             return (None, current_board_value)
@@ -727,19 +716,19 @@ class MiniChess:
             best_value = -math.inf
             best_move = None
             for move in MoveList:
-                # Convert move to internal format
+                # Convert move to internal format.
                 move = self.parse_input_v2(move)
 
-                # Simulate the move (modifies game_state in place)
+                # Simulate the move (modifies game_state in place).
                 original_piece, captured_piece, game_state = self.simulate_make_move(game_state, move)
 
-                # Recursively evaluate the resulting board state
+                # Recursively evaluate the resulting board state.
                 _, child_value = self.minimax(game_state, current_depth + 1)
 
-                # Undo the move to restore the original state
+                # Undo the move to restore the original state.
                 self.simulate_unmake_move(game_state, move, captured_piece, original_piece)
 
-                # Update if this move is better than previously seen moves
+                # Update if this move is better than previously seen moves.
                 if child_value > best_value:
                     best_value = child_value
                     best_move = move
@@ -754,7 +743,7 @@ class MiniChess:
                 _, child_value = self.minimax(game_state, current_depth + 1)
                 self.simulate_unmake_move(game_state, move, captured_piece, original_piece)
 
-                # Update if this move is lower than previously seen moves
+                # Update if this move is lower than previously seen moves.
                 if child_value < best_value:
                     best_value = child_value
                     best_move = move
@@ -799,7 +788,7 @@ class MiniChess:
         best_move = results[0]    
         heuristic_score = results[1]
         #returns the best move found using either alpha-beta or minimax algorithm and the time taken to find that move
-        result_info = best_move, eval_time, heuristic_score
+        result_info = best_move, eval_time
         return result_info
 
     """
@@ -932,10 +921,6 @@ class MiniChess:
 
             #Making the move
             self.make_move(self.current_game_state, move)
-            #logging human move, no AI details here
-            #if() #if human move then log move
-            self.log_move(self.current_game_state, move, max_turns=max_turns, timeout=None)
-
 
             #Printing the move information and the new board configuration
             printable_move = self.unparse_input(move) #unparsing the move to convert it to chess terminology
@@ -990,22 +975,13 @@ class MiniChess:
             print(f"{self.current_game_state['turn'].capitalize()} to move: ")
             if self.current_game_state['turn'] == "white":
                 turn = "white"
-                start_time = time.perf_counter()
                 move_info = self.AI_makeMove(self.current_game_state, turn)
-                search_score = move_info[2]
                 #Unloading the first element of the tuple (best_move) into a move variable
                 move = move_info[0]
                 #Make the AI lose if the best move found is not the current list of valid moves
                 if not self.is_valid_move(self.current_game_state, move):
                     print("Invalid move entered by the AI! The Human wins.")
                     exit(1)
-                end_time = time.perf_counter()
-                ai_time_taken = end_time - start_time
-                heuristic_score = self.evaluate_board(self.current_game_state)
-                states_explored = self.total_states_explored  
-                depth_stats = self.depth_exploration_stats 
-                self.log_move(self.current_game_state, move, timeout, max_turns, ai_time_taken, heuristic_score, search_score, states_explored, depth_stats)
-                ##here
                 print(self.unparse_input(move))
                 print("Time taken to find the move: " + str(move_info[1]) + " seconds")
                 #Ending the game if the AI takes longer than the timeout value to find the best move
