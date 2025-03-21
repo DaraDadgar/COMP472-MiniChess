@@ -17,6 +17,8 @@ class MiniChess:
         self.heuristic = 2 # controls which heuristic to use
         self.depth = 1 #this the depth of how far we are exploring in the game tree
         self.invalid_move_counter = 0 #variable used to end the game if a human enters two invalid moves
+        self.AI_time_out = 0.0005 # time before AI needs to exit loops
+        self.AI_Start_Time = 0.0001
         with open("gameTrace-false-5-10.txt", "w") as file:
             file.write("NEW GAME START!\n\nGAME PARAMETERS:\n")
             file.write("Timeout = 5\nMax Number of Turns = 100\nPlay Mode = H-H")
@@ -35,7 +37,7 @@ class MiniChess:
     """
     def init_board(self):
         state = {
-                "board": 
+                "board":
                 [['bK', 'bQ', 'bB', 'bN', '.'],
                 ['.', '.', 'bp', 'bp', '.'],
                 ['.', '.', '.', '.', '.'],
@@ -88,7 +90,7 @@ class MiniChess:
     def valid_moves(self, game_state):
         #Creating a list of all valid moves which will be returned at the end of the function
         valid_moves = list()
-        
+
         #Storing the turn value
         turn = game_state["turn"]
         #Looping through each filled coordinate on the board
@@ -103,7 +105,7 @@ class MiniChess:
                     start_col = str(5-row_index)
                     #Checking the valid moves based on the piece type
                     if (piece_type == "K"):
-                       self.king_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)    
+                       self.king_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)
                     if (piece_type == "N"):
                         self.knight_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)
                     if (piece_type == "p" and piece_color == "w"):
@@ -113,7 +115,7 @@ class MiniChess:
                     if (piece_type == "B"):
                         self.bishop_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)
                     if (piece_type == "Q"):
-                        self.queen_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)     
+                        self.queen_valid_moves(row_index, col_index, start_row, start_col, game_state, valid_moves)
         return valid_moves
 
     """
@@ -137,8 +139,8 @@ class MiniChess:
                         end_row = self.number_to_letter(j)
                         end_col = str(5-i)
                         valid_moves.append(((start_row,start_col),(end_row,end_col)))
-        return 
-    
+        return
+
     """
     Updates the list of valid moves with the valid moves for the "Knight" piece
     
@@ -152,7 +154,7 @@ class MiniChess:
                         end_col = str(5-i)
                         valid_moves.append(((start_row,start_col),(end_row,end_col)))
         return
-    
+
     """
     Updates the list of valid moves with the valid moves for the "White Pawn" piece
     
@@ -169,9 +171,9 @@ class MiniChess:
                         if ((i-row_index) == -1 and abs(j-col_index) == 1):
                             end_row = self.number_to_letter(j)
                             end_col = str(5-i)
-                            valid_moves.append(((start_row,start_col),(end_row,end_col)))   
-        return 
-    
+                            valid_moves.append(((start_row,start_col),(end_row,end_col)))
+        return
+
     """
     Updates the list of valid moves with the valid moves for the "Black Pawn" piece
     
@@ -188,13 +190,13 @@ class MiniChess:
                         if ((i-row_index) == 1 and abs(j-col_index) == 1):
                             end_row = self.number_to_letter(j)
                             end_col = str(5-i)
-                            valid_moves.append(((start_row,start_col),(end_row,end_col)))   
-        return 
+                            valid_moves.append(((start_row,start_col),(end_row,end_col)))
+        return
 
     """
     Updates the list of valid moves with the valid moves for the "Bishop" piece
     
-    """  
+    """
     def bishop_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves):
         directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]  # top left, top right, bottom left, bottom right
         for d in directions:
@@ -210,13 +212,13 @@ class MiniChess:
                     end_row = self.number_to_letter(j)
                     end_col = str(5 - i)
                     valid_moves.append(((start_row, start_col), (end_row, end_col)))
-                    break 
+                    break
                 else:
-                    break  
+                    break
                 i += d[0]
                 j += d[1]
-        return 
-    
+        return
+
     """
     Updates the list of valid moves with the valid moves for the "Queen" piece
     
@@ -225,27 +227,27 @@ class MiniChess:
     def queen_valid_moves(self, row_index, col_index, start_row, start_col, game_state, valid_moves):
         directions = [(-1, -1), (-1, 1), (1, -1), (1, 1),  # bishop directions
                       (-1, 0), (1, 0), (0, -1), (0, 1)]  # rook directions
-        
+
         for d in directions:
             i, j = row_index + d[0], col_index + d[1]
-            while 0 <= i < 5 and 0 <= j < 5:  
-                if game_state["board"][i][j] == ".": 
+            while 0 <= i < 5 and 0 <= j < 5:
+                if game_state["board"][i][j] == ".":
                     end_row = self.number_to_letter(j)
                     end_col = str(5 - i)
                     valid_moves.append(((start_row, start_col), (end_row, end_col)))
-                elif game_state["board"][i][j][0] == game_state["turn"][0]: 
+                elif game_state["board"][i][j][0] == game_state["turn"][0]:
                     break
-                elif game_state["board"][i][j][0] != game_state["turn"][0]:  
+                elif game_state["board"][i][j][0] != game_state["turn"][0]:
                     end_row = self.number_to_letter(j)
                     end_col = str(5 - i)
                     valid_moves.append(((start_row, start_col), (end_row, end_col)))
-                    break  
+                    break
                 else:
-                    break 
+                    break
                 i += d[0]
                 j += d[1]
         return
-    
+
     """
     Converts the row numbers into letters for syntax validity
 
@@ -277,7 +279,7 @@ class MiniChess:
                 file.write(str(6 - i) + "  " + ' '.join(piece.rjust(3) for piece in row))
                 file.write("\n")
         return
-    
+
     """
     Modify the board to make a move
 
@@ -560,14 +562,14 @@ class MiniChess:
                 game_state["turn"] = "white"
                 num_white_moves = len(self.valid_moves(game_state)) * 0.1
                 game_state["turn"] = "black"
-                
+
             score += (num_white_moves - num_black_moves)
             # print("New score: " + str(score))
 
             if whiteKing == False or blackKing == False: return True,score
             return False,score
         #Heuristic 2
-        else:      
+        else:
             piece_values = {"K": 999, "Q": 9, "B": 3, "N": 3, "p": 1}
             score = 0
             blackKing = False
@@ -685,6 +687,8 @@ class MiniChess:
         current_Beta = beta
         # Loop start to evaluate children
         for move in MoveList:
+            if (time.perf_counter() - self.AI_Start_Time) + 0.00005 > self.AI_time_out:
+                return current_best_move,current_best_heuristic  # Return the best move found so far
             move = self.parse_input_v2(move) # ((A,2),(B,2)) => ((3,0),(
             # Will do recursion to go to children for internal nodes
             if current_depth < self.depth:  # If we're not at the max depth then go one layer down by simulating the move
@@ -826,23 +830,23 @@ class MiniChess:
             start_depth = 2
             self.depth += 1
             revertDepth = True
-        
-        if self.algorithm: 
-            start = time.time() #starting a timer before the algorithm method is called
+
+        if self.algorithm:
+            self.AI_Start_Time = time.perf_counter() #starting a timer before the algorithm method is called
             results = self.alpha_beta(game_state,start_depth,-15000,15000)
-            end = time.time() #ending the timer once the algorithm finishes execution
+            end = time.perf_counter() #ending the timer once the algorithm finishes execution
         else:
-            start = time.time()
-            results = self.minimax(game_state,start_depth) 
-            end = time.time()
+            self.AI_Start_Time = time.perf_counter()
+            results = self.minimax(game_state,start_depth)
+            end = time.perf_counter()
 
         if revertDepth:
             self.depth -= 1
             revertDepth = False
         #Computing the evalutation time to find the best move
-        eval_time = round(end - start, 7)
+        eval_time = round(end - self.AI_Start_Time, 7)
         #Storing the best move found by the algorithm chosen
-        best_move = results[0]    
+        best_move = results[0]
 
         #returns the best move found using either alpha-beta or minimax algorithm and the time taken to find that move
         result_info = best_move, eval_time
@@ -863,7 +867,7 @@ class MiniChess:
         print("1- Human vs Human\n2- AI vs Human\n3- Human vs AI\n4- AI vs AI\n")
         #Registering the user's game mode selection
         game_mode = input("Please Select a Game Mode(ex: 1 for \"Human vs Human\"): ")
-        while(1): 
+        while(1):
             #Launching the appropriate game based on the user's selection
             if game_mode == "1":
                 max_turns = input("Enter the maximum number of turns before the end of the game: ")
@@ -880,8 +884,8 @@ class MiniChess:
                         self.algorithm = True
                         self.ai_vs_h(timeout, max_turns)
                     else:
-                        algorithm = input("Incorrect input! Please try again: ")   
-                        continue 
+                        algorithm = input("Incorrect input! Please try again: ")
+                        continue
                 exit(1)
             elif game_mode == "3":
                 timeout = input("Enter the maximum time (in seconds) allocated for the AI to make a move: ")
@@ -895,8 +899,8 @@ class MiniChess:
                         self.algorithm = True
                         self.h_vs_ai(timeout, max_turns)
                     else:
-                        algorithm = input("Incorrect input! Please try again: ")   
-                        continue 
+                        algorithm = input("Incorrect input! Please try again: ")
+                        continue
                 exit(1)
             elif game_mode == "4":
                 timeout = input("Enter the maximum time (in seconds) allocated for the AI to make a move: ")
@@ -912,8 +916,8 @@ class MiniChess:
                         self.algorithm = True
                         self.ai_vs_ai(timeout, max_turns, int(heuristic_white_AI), int(heuristic_black_AI))
                     else:
-                        algorithm = input("Incorrect input! Please try again: ")   
-                        continue 
+                        algorithm = input("Incorrect input! Please try again: ")
+                        continue
                 exit(1)
             else:
                 game_mode = input("Invalid Input! Please try again: ")
@@ -963,16 +967,16 @@ class MiniChess:
                         print("Black wins!")
                         exit(1)
                     else:
-                        print("White wins!")   
+                        print("White wins!")
                         exit(1)
                   #Otherwise, we alert the user for thier invalid move and continue the loop
                   else:
                     print("Invalid move. Try again.")
                     continue
-            
+
             #Reseting the invalid_move_counter for reuse in next turns
             self.invalid_move_counter = 0
-            
+
             #Auto checking if it's a valid move from previous statement
             win_condition = self.check_win(self.current_game_state, move)
 
@@ -1009,7 +1013,7 @@ class MiniChess:
     """
     def ai_vs_h(self, timeout, max_turns):
         #Checking the algorithm chosen by the user
-        if self.algorithm: alg = "Alpha-Beta" 
+        if self.algorithm: alg = "Alpha-Beta"
         else: alg = "Minimax"
         #Printing the initial game information and initial board configuration
         print()
@@ -1067,7 +1071,7 @@ class MiniChess:
                             continue
                 else:
                     self.invalid_move_counter = 0  # Reset counter when a valid move is entered
-                    
+
             #Auto checking if it's a valid move from previous statement
             win_condition = self.check_win(self.current_game_state, move)
 
@@ -1104,7 +1108,7 @@ class MiniChess:
     """
     def h_vs_ai(self, timeout, max_turns):
         #Checking the algorithm chosen by the user
-        if self.algorithm: alg = "Alpha-Beta" 
+        if self.algorithm: alg = "Alpha-Beta"
         else: alg = "Minimax"
         #Printing the initial game information and initial board configuration
         print()
@@ -1188,7 +1192,7 @@ class MiniChess:
                     file.write("\nBlack King captured! White wins after " + str(self.turn_counter - 1) + " turns")
                 exit(1)
 
-    
+
     """
     AI vs AI game mode
     
@@ -1200,7 +1204,7 @@ class MiniChess:
     """
     def ai_vs_ai(self, timeout, max_turns, white_heuristic, black_heuristic):
         #Checking the algorithm chosen by the user
-        if self.algorithm: alg = "Alpha-Beta" 
+        if self.algorithm: alg = "Alpha-Beta"
         else: alg = "Minimax"
         #Printing the initial game information and initial board configuration
         print()
